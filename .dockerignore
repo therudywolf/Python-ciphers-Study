@@ -1,0 +1,8 @@
+.git
+.idea
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+PythonCipher.code-workspace
+*.save

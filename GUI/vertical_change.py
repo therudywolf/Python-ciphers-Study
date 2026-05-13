@@ -30,8 +30,9 @@ for i in range(len(split_msg)):
 coded = list()
 for i in range(len(split_msg)):
     for j in range(len(split_msg[i])):
-        print(int(alphabet_lower.get(split_msg[i][j])), end=" ")
-        coded.append(int(alphabet_lower.get(split_msg[i][j])))
+        value = alphabet_lower.get(split_msg[i][j], alphabet_lower['.'])
+        print(int(value), end=" ")
+        coded.append(int(value))
     print()
 split_coded = [coded[i:i + key_len] for i in range(0, len(coded), key_len)]
 # сортировка ключа и шифрование таблицы
@@ -69,11 +70,12 @@ def get_key(d, value):
     for k, v in d.items():
         if v == value:
             return k
+    return ''
 
 
 for i in range(1, len(split_encrypted)):
     for j in range(0, len(split_encrypted[i])):
-        print(get_key(alphabet_lower, split_encrypted[i][j]), end=" ")
+        print(get_key(alphabet_lower, split_encrypted[i][j]) or '.', end=" ")
 
 print("\n")
 # расшифровка

@@ -90,21 +90,15 @@ def RSA_realisation(msg):
                 'Щ': 60, 'Ъ': 61, 'Ы': 62, 'Ь': 63, 'Э': 64,
                 'Ю': 65, 'Я': 66, '!': 67, "?": 68, ";": 69}
 
-    # Сообщение
-
-    m = 0
-    message = input("Введите сообщение: ")
-
-    for krya in message:
-        m += int(alf.find(krya))
-    print("Сообщение (m): ", m)
-
     # хэшируем сообщение
     # msg = input("Введите сообщение: ")
     msg_list = list(msg)
     alpha_code_msg = list()
-    for i in range(len(msg_list)):
-        alpha_code_msg.append(int(alphavit.get(msg_list[i])))
+    for ch in msg_list:
+        code = alphavit.get(ch)
+        if code is None:
+            continue
+        alpha_code_msg.append(int(code))
     final_otvet += "Длина исходного сообщения {} символов".format(
         len(alpha_code_msg)) + '\n'
     # print()

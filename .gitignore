@@ -122,3 +122,31 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE / local tooling
+.idea/
+.vscode/
+*.code-workspace
+.claude/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Generated sample/output files
+test.txt
+test.txt.save
+crypted_file.txt
+decrypted_crypted_file.txt
+GUI/crypted_file.txt
+GUI/decrypted_crypted_file.txt
+
+# IDE
+.idea/
+*.code-workspace
+.vscode/
+
+# Project generated files
+crypted_file.txt
+decrypted_crypted_file.txt
+*.save

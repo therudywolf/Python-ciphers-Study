@@ -11,7 +11,10 @@ for i in text:  # блок шифрования
         k = ord(i) % ord('а')
         code += chr(ord('я') - k)
     else:
-        code += alphavite[len(alphavite) - alphavite.find(i) - 1]
+        if i in alphavite:
+            code += alphavite[len(alphavite) - alphavite.find(i) - 1]
+        else:
+            code += i
 print("Зашифровка:", code)  # Выводим зашифрованное сообщение
 
 text_decode = code
@@ -29,5 +32,8 @@ for i in text_decode:  # блок расшифрования
         k = ord(i) % ord('а')
         decode += chr(ord('я') - k)
     else:
-        decode += alphavite[len(alphavite) - alphavite.find(i) - 1]
+        if i in alphavite:
+            decode += alphavite[len(alphavite) - alphavite.find(i) - 1]
+        else:
+            decode += i
 print("Расшифровка:", decode)

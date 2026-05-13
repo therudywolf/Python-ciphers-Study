@@ -1,11 +1,12 @@
 import tkinter as tk
-from tkinter import *
-from tkinter import messagebox
-from tkinter import ttk
+from tkinter import messagebox, ttk
 import os
-# функция алгоритма шифрования решётки кардано
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from reshetka_kardano_final import reshetka_kardano
-from re import findall    # метод из модуля для разбиения строки на подстроки
+from re import findall
 from vernam import notepad_shenona
 from A5_first import a5_realisation
 from A5_second import a52_realisation
@@ -16,345 +17,262 @@ from ElGamal import ElGamal_realisation
 from GOST_34_10_94 import GOST_34_10_94_realisation
 from GOST_34_10_2012 import GOST_34_10_2012_realisation
 
-# Функция выбора алгоритма шифрования/////////////////////////////////////////////////////////////////////////////////
+
+ALGORITHMS = [
+    "Атбаш", "Цезарь", "Полибий", "Тритемий", "Белазо", "Виженер",
+    "Матричный", "Плейфер", "Вертикальная перестановка",
+    "Решётка Кардано", "Одноразовый блокнот Шеннона",
+    "A5/1", "A5/2", "AES",
+    "Магма (Простая замена)", "Магма (Гаммирование)",
+    "Магма (Обратное гаммирование)", "Магма (Имитовставка)",
+    "RSA", "El Gamal", "ГОСТ 34.10-94", "ГОСТ 34.10-2012"
+]
+
+ALGO_MAP = {name: idx + 1 for idx, name in enumerate(ALGORITHMS)}
+
+DARK_BG = "#1e1e2e"
+DARK_SURFACE = "#2d2d3f"
+DARK_BORDER = "#3d3d5c"
+ACCENT = "#7c3aed"
+ACCENT_HOVER = "#6d28d9"
+TEXT_PRIMARY = "#e2e8f0"
+TEXT_SECONDARY = "#94a3b8"
+SUCCESS = "#10b981"
+ERROR = "#ef4444"
+
+code = ''
+decode = ''
+key = ''
+text = ''
+krya = 0
 
 
-def select():
-    global krya
-    if combotext.get() == "Атбаш":
-        krya = 1
-    elif combotext.get() == "Цезарь":
-        krya = 2
-    elif combotext.get() == "Полибий":
-        krya = 3
-    elif combotext.get() == "Тритемий":
-        krya = 4
-    elif combotext.get() == "Белазо":
-        krya = 5
-    elif combotext.get() == "Виженер":
-        krya = 6
-    elif combotext.get() == "Матричный":
-        krya = 7
-    elif combotext.get() == "Плейфер":
-        krya = 8
-    elif combotext.get() == "Вертикальная перестановка":
-        krya = 9
-    elif combotext.get() == "Решётка Кардано":
-        krya = 10
-    elif combotext.get() == "Одноразовый блокнот Шеннона":
-        krya = 11
-    elif combotext.get() == "A5/1":
-        krya = 12
-    elif combotext.get() == "A5/2":
-        krya = 13
-    elif combotext.get() == "AES":
-        krya = 14
-    elif combotext.get() == "Магма (Простая замена)":
-        krya = 15
-    elif combotext.get() == "Магма (Гаммирование)":
-        krya = 16
-    elif combotext.get() == "Магма (Обратное гаммирование)":
-        krya = 17
-    elif combotext.get() == "Магма (Имитовставка)":
-        krya = 18
-    elif combotext.get() == "RSA":
-        krya = 19
-    elif combotext.get() == "El Gamal":
-        krya = 20
-    elif combotext.get() == "ГОСТ 34.10-94":
-        krya = 21
-    elif combotext.get() == "ГОСТ 34.10-2012":
-        krya = 22
+# --- Cipher logic ---
 
-
-# Алгоритм шифрования АТБАШ//////////////////////////////////////////////////////////////////////////////////////
-def atbash_encrypt():
+def atbash_encrypt(text):
     alphavite = ',.!:\'\"#?@[](){} '
-    #text = message.get()
-    global code
-    code = ''  # Зашифрованное сообщение
-    for i in text:  # блок шифрования
+    result = ''
+    for i in text:
         if i.isupper():
-            # находим позицию символа в алфавите (начиная с 0)
             k = ord(i) % ord('А')
-            # выбираем из алфавита символ, который меньше на k+1 чем длина алфавита
-            code += chr(ord('Я') - k)
+            result += chr(ord('Я') - k)
         elif i.islower():
             k = ord(i) % ord('а')
-            code += chr(ord('я') - k)
+            result += chr(ord('я') - k)
         else:
-            code += alphavite[len(alphavite) - alphavite.find(i) - 1]
-    messagebox.showinfo("Зашифровка", code)  # Выводим зашифрованное сообщение
-    return code
+            if i in alphavite:
+                result += alphavite[len(alphavite) - alphavite.find(i) - 1]
+            else:
+                result += i
+    return result
 
 
-def atbash_decrypt():
-    alphavite = ',.!:\'\"#?@[](){} '
-    text_decode = code
-    if code == '':
-        text_decode = text
-    global decode
-    decode = ''
-    for i in text_decode:  # блок расшифрования
-        if i.isupper():
-            # находим позицию символа в алфавите (начиная с 0)
-            k = ord(i) % ord('А')
-            # выбираем из алфавита сивол, который меньше на k+1 чем длина алфавита
-            decode += chr(ord('Я') - k)
-        elif i.islower():
-            k = ord(i) % ord('а')
-            decode += chr(ord('я') - k)
-        else:
-            decode += alphavite[len(alphavite) - alphavite.find(i) - 1]
-    messagebox.showinfo("Расшифровка", decode)
-    return decode
-# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-# Шифр Цезаря////////////////////////////////////////////////////////////////////////////////////////////////////////
+def atbash_decrypt(text):
+    return atbash_encrypt(text)
 
 
-def cesar_code():
-    global code, key
+def cesar_encrypt(text, key):
     alphavite = ',.!:\'\"#?@[](){} '
     alphavite1 = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = 'АБВГДДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЪЫЬЭЮЯ'
-    code = ""
-    #text = message.get()
-    key = message2.get()
-    key = int(key)
+    alphavite2 = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
+    result = ""
+    distance = int(key)
     for i in text:
         if i.islower():
-            code += alphavite1[(alphavite1.find(i) + key) % len(alphavite1)]
+            result += alphavite1[(alphavite1.find(i) + distance) % len(alphavite1)]
         elif i.isupper():
-            code += alphavite2[(alphavite2.find(i) + key) % len(alphavite2)]
+            result += alphavite2[(alphavite2.find(i) + distance) % len(alphavite2)]
         else:
-            code += alphavite[(alphavite.find(i) + key) % len(alphavite)]
-    messagebox.showinfo("Зашифровка", code)
-    # print(code)
+            if i in alphavite:
+                result += alphavite[(alphavite.find(i) + distance) % len(alphavite)]
+            else:
+                result += i
+    return result
 
 
-def cesar_decode():
-    global decode
+def cesar_decrypt(text, key):
     alphavite = ',.!:\'\"#?@[](){} '
     alphavite1 = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = 'АБВГДДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЪЫЬЭЮЯ'
-    decode = ""
-    key = message2.get()
-    key = int(key)
-    text_decode = code
-    if text_decode == '':
-        text_decode = text
-    for i in text_decode:
+    alphavite2 = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
+    result = ""
+    distance = int(key)
+    for i in text:
         if i.islower():
-            decode += alphavite1[(alphavite1.find(i) - key) % len(alphavite1)]
+            result += alphavite1[(alphavite1.find(i) - distance) % len(alphavite1)]
         elif i.isupper():
-            decode += alphavite2[(alphavite2.find(i) - key) % len(alphavite2)]
+            result += alphavite2[(alphavite2.find(i) - distance) % len(alphavite2)]
         else:
-            decode += alphavite[(alphavite.find(i) - key) % len(alphavite)]
-    messagebox.showinfo("Расшифровка", decode)
-    # print(decode)
-    return decode
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-# Шифр Полибия//////////////////////////////////////////////////////////////////////////////////////////////////
+            if i in alphavite:
+                result += alphavite[(alphavite.find(i) - distance) % len(alphavite)]
+            else:
+                result += i
+    return result
 
 
-def polibiy_crypt():
-    alpha = 'абвгдежзийклмнопрстуфхцчшщъыьэюя, .!'  # алфавит
-    global code
-    code = ''  # Зашифрованное сообщение
-    text = message.get().lower()
-    for i in text:  # блок шифрования
-        code += str(alpha.find(i) // 6 + 1) + str(alpha.find(
-            i) % 6 + 1) + ' '  # определяем 2 числа, номер строки, как целое от деления позиции
-        # символа в алфавите на 6, и номер столбца, как остаток от деления позиции символа на 6
-    messagebox.showinfo("Зашифровка", code)
-
-
-def polibiy_decrypt():
-    global decode
+def polibiy_encrypt(text):
     alpha = 'абвгдежзийклмнопрстуфхцчшщъыьэюя, .!'
-    text_decode = code.split()
-    if code == '':
-        text_decode = text.split()
-    decode = ''
-    for i in text_decode:
-        decode += alpha[(int(i[0]) - 1) * 6 + int(i[1]) - 1]
-    messagebox.showinfo("Расшифровка", decode)
-
-# Шифр Тритемия////////////////////////////////////////////////////////////////////////////////////////////////
+    result = ''
+    text_lower = text.lower()
+    for i in text_lower:
+        pos = alpha.find(i)
+        if pos >= 0:
+            result += str(pos // 6 + 1) + str(pos % 6 + 1) + ' '
+    return result.strip()
 
 
-def tritemiy_encrypt():
-    global code
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'  # алфавит
+def polibiy_decrypt(text):
+    alpha = 'абвгдежзийклмнопрстуфхцчшщъыьэюя, .!'
+    parts = text.split()
+    result = ''
+    for i in parts:
+        if len(i) >= 2:
+            result += alpha[(int(i[0]) - 1) * 6 + int(i[1]) - 1]
+    return result
+
+
+def tritemiy_encrypt(text):
+    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
     alphavite2 = alphavite.upper()
     alphavite3 = ',.!:\'\"#?@[](){} '
-    # text = message.get()
-    code = ''  # Зашифрованное сообщение
+    result = ''
     meow = 0
-    for i in text:  # блок шифрования
+    for i in text:
         if i.islower():
-            code += alphavite[(alphavite.find(i) + meow) % len(alphavite)]
+            result += alphavite[(alphavite.find(i) + meow) % len(alphavite)]
         elif i.isupper():
-            code += alphavite2[(alphavite2.find(i) + meow) % len(alphavite2)]
+            result += alphavite2[(alphavite2.find(i) + meow) % len(alphavite2)]
         else:
-            code += alphavite3[(alphavite3.find(i) + meow) % len(alphavite3)]
+            if i in alphavite3:
+                result += alphavite3[(alphavite3.find(i) + meow) % len(alphavite3)]
+            else:
+                result += i
         meow += 1
-    messagebox.showinfo("Зашифровка", code)
+    return result
 
 
-def tritemiy_decrypt():
-    global decode
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'  # алфавит
+def tritemiy_decrypt(text):
+    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
     alphavite2 = alphavite.upper()
     alphavite3 = ',.!:\'\"#?@[](){} '
-    decode = ''
-    text_decode = code
-    if code == '':
-        text_decode = text
+    result = ''
     meow = 0
-    for i in text_decode:
+    for i in text:
         if i.islower():
-            decode += alphavite[(alphavite.find(i) - meow) % len(alphavite)]
+            result += alphavite[(alphavite.find(i) - meow) % len(alphavite)]
         elif i.isupper():
-            decode += alphavite2[(alphavite2.find(i) - meow) % len(alphavite2)]
+            result += alphavite2[(alphavite2.find(i) - meow) % len(alphavite2)]
         else:
-            decode += alphavite3[(alphavite3.find(i) - meow) % len(alphavite3)]
+            if i in alphavite3:
+                result += alphavite3[(alphavite3.find(i) - meow) % len(alphavite3)]
+            else:
+                result += i
         meow += 1
-    messagebox.showinfo("Расшифровка", decode)
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-# Шифр Белазо////////////////////////////////////////////////////////////////////////////////////////////////
+    return result
 
 
-def belazo_encrypt():
-    global code, key
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'  # алфавит
+def belazo_encrypt(text, key):
+    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
     alphavite2 = alphavite.upper()
     alphavite3 = ',.!:\'\"#?@[](){} '
-    code = ''
+    result = ''
     meow = 0
-    # text = message.get()
-    key = message2.get()
-
-    for i in text:  # блок шифрования
+    for i in text:
         if i.islower():
-            code += alphavite[(alphavite.find(i) +
-                               alphavite.find(key[meow]) + 1) % len(alphavite)]
+            result += alphavite[(alphavite.find(i) + alphavite.find(key[meow]) + 1) % len(alphavite)]
         elif i.isupper():
-            code += alphavite2[(alphavite2.find(i) +
-                                alphavite2.find(key[meow].upper()) + 1) % len(alphavite2)]
+            result += alphavite2[(alphavite2.find(i) + alphavite2.find(key[meow].upper()) + 1) % len(alphavite2)]
         else:
-            code += alphavite3[(alphavite3.find(i) +
-                                alphavite3.find(key[meow]) - 1) % len(alphavite3)]
+            if i in alphavite3:
+                result += alphavite3[(alphavite3.find(i) + alphavite3.find(key[meow]) - 1) % len(alphavite3)]
+            else:
+                result += i
         meow = (meow + 1) % len(key)
-    messagebox.showinfo("Зашифровка", code)
+    return result
 
 
-def belazo_decrypt():
-    global decode
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'  # алфавит
+def belazo_decrypt(text, key):
+    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
     alphavite2 = alphavite.upper()
     alphavite3 = ',.!:\'\"#?@[](){} '
-    decode = ''
-    text_decode = code
-    if code == '':
-        text_decode = text
+    result = ''
     meow = 0
-
-    for i in text_decode:
+    for i in text:
         if i.islower():
-            decode += alphavite[(alphavite.find(i) -
-                                 alphavite.find(key[meow]) - 1) % len(alphavite)]
+            result += alphavite[(alphavite.find(i) - alphavite.find(key[meow]) - 1) % len(alphavite)]
         elif i.isupper():
-            decode += alphavite2[(alphavite2.find(i) -
-                                  alphavite2.find(key[meow].upper()) - 1) % len(alphavite2)]
+            result += alphavite2[(alphavite2.find(i) - alphavite2.find(key[meow].upper()) - 1) % len(alphavite2)]
         else:
-            decode += alphavite3[(alphavite3.find(i) -
-                                  alphavite3.find(key[meow]) + 1) % len(alphavite3)]
+            if i in alphavite3:
+                result += alphavite3[(alphavite3.find(i) - alphavite3.find(key[meow]) + 1) % len(alphavite3)]
+            else:
+                result += i
         meow = (meow + 1) % len(key)
-    messagebox.showinfo("Расшифровка", decode)
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-# Шифр Виженера////////////////////////////////////////////////////////////////////////////////////////////////
+    return result
 
 
-def viginer_encrypt():
-    global code
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'  # алфавит
+def vigener_encrypt(text, key):
+    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
     alphavite2 = alphavite.upper()
     alphavite3 = ',.!:\'\"#?@[](){} '
-    code = ''
+    result = ''
+    full_key = key + text
     meow = 0
-    text = message.get()
-    key = message2.get()
-    key = key + text
-    for i in text:  # блок шифрования
+    for i in text:
         if i.islower():
-            code += alphavite[(alphavite.find(i) +
-                               alphavite.find(key[meow])) % len(alphavite)]
+            result += alphavite[(alphavite.find(i) + alphavite.find(full_key[meow])) % len(alphavite)]
         elif i.isupper():
-            code += alphavite2[(alphavite2.find(i) +
-                                alphavite2.find(key[meow].upper())) % len(alphavite2)]
+            result += alphavite2[(alphavite2.find(i) + alphavite2.find(full_key[meow].upper())) % len(alphavite2)]
         else:
-            code += alphavite3[(alphavite3.find(i) +
-                                alphavite3.find(key[meow])) % len(alphavite3)]
-        meow = (meow + 1) % len(key)
-    messagebox.showinfo("Зашифровка", code)
+            if i in alphavite3:
+                result += alphavite3[(alphavite3.find(i) + alphavite3.find(full_key[meow])) % len(alphavite3)]
+            else:
+                result += i
+        meow = (meow + 1) % len(full_key)
+    return result
 
 
-def viginer_decrypt():
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'  # алфавит
+def vigener_decrypt(text, key):
+    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
     alphavite2 = alphavite.upper()
     alphavite3 = ',.!:\'\"#?@[](){} '
-    key = message2.get()
-    key = key + text
-    decode = ''
-    if code == '':
-        text_decode = text
-    else:
-        text_decode = code
+    full_key = key + text
+    result = ''
     meow = 0
-    for i in text_decode:
+    for i in text:
         if i.islower():
-            decode += alphavite[(alphavite.find(i) -
-                                 alphavite.find(key[meow])) % len(alphavite)]
+            result += alphavite[(alphavite.find(i) - alphavite.find(full_key[meow])) % len(alphavite)]
         elif i.isupper():
-            decode += alphavite2[(alphavite2.find(i) -
-                                  alphavite2.find(key[meow].upper())) % len(alphavite2)]
+            result += alphavite2[(alphavite2.find(i) - alphavite2.find(full_key[meow].upper())) % len(alphavite2)]
         else:
-            decode += alphavite3[(alphavite3.find(i) -
-                                  alphavite3.find(key[meow])) % len(alphavite3)]
-        meow = (meow + 1) % len(key)
-    messagebox.showinfo("Расшифровка", decode)
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            if i in alphavite3:
+                result += alphavite3[(alphavite3.find(i) - alphavite3.find(full_key[meow])) % len(alphavite3)]
+            else:
+                result += i
+        meow = (meow + 1) % len(full_key)
+    return result
 
-# Матричный/////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Проверка условий на ошибки
+# --- Matrix cipher helpers ---
+alpha = tuple("АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ .,!/{}\'\"1234567890")
+MatrixLength = 3
+MatrixMod = len(alpha)
+MatrixSquare = MatrixLength * MatrixLength
+mainKey = ""
 
 
 def checkErrors(key):
     if len(key) != MatrixSquare:
-        # "len(key) != %d" % MatrixSquare
-        return "Длина ключа не равна длине квадрата матрицы!!!"
+        return "Длина ключа не равна длине квадрата матрицы!"
     elif not getDeter(sliceto(key)):
-        return "Определитель матрицы равен 0!!!"
+        return "Определитель матрицы равен 0!"
     elif not getDeter(sliceto(key)) % MatrixMod:
-        # det(Key) mod len(alpha) = 0
         return "Определитель матрицы mod длина алфавита = 0"
-    else:
-        return None
-
-# Регулярное выражение - 3 символа сообщения
+    return None
 
 
 def regular(text):
     template = r".{%d}" % MatrixLength
     return findall(template, text)
-
-# Кодирование символов в матрице
 
 
 def encode(matrix):
@@ -363,10 +281,8 @@ def encode(matrix):
             matrix[x][y] = alpha.index(matrix[x][y])
     return matrix
 
-# Декодирование чисел в матрице + шифрование/расшифрование
 
-
-def decode(matrixM, matrixK, message=""):
+def decode_matrix(matrixM, matrixK, message=""):
     matrixF = []
     for z in range(len(matrixM)):
         temp = [0 for _ in range(MatrixLength)]
@@ -379,8 +295,6 @@ def decode(matrixM, matrixK, message=""):
         message += "".join(string)
     return message
 
-# Создаёт матрицу по три символа
-
 
 def sliceto(text):
     matrix = []
@@ -388,18 +302,15 @@ def sliceto(text):
         matrix.append(list(three))
     return encode(matrix)
 
-# Нахождение обратного определителя матрицы
-
 
 def iDet(det):
     for num in range(MatrixMod):
         if num * det % MatrixMod == 1:
             return num
 
-# Алгебраические дополнения
-
 
 def algebratic(x, y, det):
+    global mainKey
     matrix = sliceto(mainKey)
     matrix.remove(matrix[x])
     for z in range(2):
@@ -407,19 +318,16 @@ def algebratic(x, y, det):
     det2x2 = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
     return (pow(-1, x + y) * det2x2 * iDet(det)) % MatrixMod
 
-# Получение определителя матрицы
-
 
 def getDeter(matrix):
-    return \
-        (matrix[0][0] * matrix[1][1] * matrix[2][2]) + \
-        (matrix[0][1] * matrix[1][2] * matrix[2][0]) + \
-        (matrix[1][0] * matrix[2][1] * matrix[0][2]) - \
-        (matrix[0][2] * matrix[1][1] * matrix[2][0]) - \
-        (matrix[0][1] * matrix[1][0] * matrix[2][2]) - \
+    return (
+        (matrix[0][0] * matrix[1][1] * matrix[2][2]) +
+        (matrix[0][1] * matrix[1][2] * matrix[2][0]) +
+        (matrix[1][0] * matrix[2][1] * matrix[0][2]) -
+        (matrix[0][2] * matrix[1][1] * matrix[2][0]) -
+        (matrix[0][1] * matrix[1][0] * matrix[2][2]) -
         (matrix[1][2] * matrix[2][1] * matrix[0][0])
-
-# Получение алгебраических дополнений
+    )
 
 
 def getAlgbr(det, index=0):
@@ -430,8 +338,6 @@ def getAlgbr(det, index=0):
             index += 1
     return algbrs
 
-# Получение обратной матрицы
-
 
 def getIMatr(algbr):
     return [
@@ -440,257 +346,141 @@ def getIMatr(algbr):
         [algbr[2], algbr[5], algbr[8]]
     ]
 
-# Основная функция
-
 
 def encryptDecrypt(mode, message, key):
     MatrixMessage = sliceto(message)
     MatrixKey = sliceto(key)
     if mode == '1':
-        final_matrich = decode(MatrixMessage, MatrixKey)
+        return decode_matrix(MatrixMessage, MatrixKey)
     else:
         algbr = getAlgbr(getDeter(MatrixKey))
-        final_matrich = decode(MatrixMessage, getIMatr(algbr))
-    return final_matrich
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-# Шифр Плэйфера/////////////////////////////////////////////////////////////////////////////////////////////////
+        return decode_matrix(MatrixMessage, getIMatr(algbr))
 
 
-def playfer_crypt():
-    # инициализация алфавита
-    alphavite_lower = ['а', 'б', 'в', 'г', 'д',
-                       'е', 'ж', 'з', 'и', 'к',
-                       'л', 'м', 'н', 'о', 'п',
-                       'р', 'с', 'т', 'у', 'ф',
-                       'х', 'ц', 'ч', 'ш', 'щ',
-                       'ь', 'ы', 'э', 'ю', 'я']
-
-    global enc_text_final_playf
-    enc_text_final_playf = ""
-    # text = input(" Введите текст (без пробелов и небуквенных символов): ").lower()  # Вводим текст
-    # key = input(" Введите ключ (без повторяющихся символов): ").lower()  # Вводим ключ
-    text = message.get().lower()
-    for krya in text.lower():
-        if krya == ',':
-            text = text.replace(krya, 'зпт')
-        elif krya == ".":
-            text = text.replace(krya, "тчк")
-        elif krya not in alphavite_lower:
-            text = text.replace(krya, '')
-
-    # Формируем алфавит
-    new_alphabet = []  # Заготовка под новый алфавит
-
+# --- Playfair cipher ---
+def playfer_crypt(text, key):
+    alphavite_lower = list('абвгдежзиклмнопрстуфхцчшщьыэюя')
+    text = text.lower()
+    for ch in list(text):
+        if ch == ',':
+            text = text.replace(ch, 'зпт')
+        elif ch == ".":
+            text = text.replace(ch, "тчк")
+        elif ch not in alphavite_lower:
+            text = text.replace(ch, '')
+    new_alphabet = []
     for i in range(len(key)):
-        new_alphabet.append(key[i])  # Заполняем новый алфавит значением ключа
-    for i in range(len(alphavite_lower)):
-        bool_buff = False  # Буфер для проверки вхождения символа в алфавит ниже
-        for j in range(len(key)):
-            if alphavite_lower[i] == key[j]:
-                # Если находим вхождение символа алфавита в ключ, то прерываем цикл и переходим к другому символу
-                bool_buff = True
-                break
-        if bool_buff == False:  # Если не нашли вхождение символа алфавита в ключ, то записываем его в новый алфавит
-            new_alphabet.append(alphavite_lower[i])  # Заполняем алфавит
-    print(" new_alphabet = {}".format(new_alphabet))
-
-    # Формируем матричный алфавит
-    mtx_abt_j = []  # Заготовка под матричный алфавит по j
+        if key[i] not in new_alphabet:
+            new_alphabet.append(key[i])
+    for ch in alphavite_lower:
+        if ch not in new_alphabet:
+            new_alphabet.append(ch)
+    mtx = []
     counter = 0
     for j in range(5):
-        mtx_abt_i = []  # Заготовка под матричный алфавит по i в j
+        row = []
         for i in range(6):
-            # Добавляем букву в матрицу
-            mtx_abt_i.append(new_alphabet[counter])
-            counter = counter + 1
-        mtx_abt_j.append(mtx_abt_i)
-    print(" mtx_abt = {}".format(mtx_abt_j))
-    # Поправляем текст
-    if len(text) % 2 == 1:  # Если последняя биграмма состоит из одной буквы, то добавляем букву в конец
-        text = text + "я"
-    print(" text = {}".format(text))
-    # Шифруем
+            row.append(new_alphabet[counter])
+            counter += 1
+        mtx.append(row)
+    if len(text) % 2 == 1:
+        text += "я"
     enc_text = ""
     for t in range(0, len(text), 2):
-        flag = True  # флаг для выхода из всех циклов
-        for j_1 in range(5):
-            if flag == False:
-                break
-            for i_1 in range(6):
-                if flag == False:
-                    break
-                if mtx_abt_j[j_1][i_1] == text[t]:
-                    for j_2 in range(5):
-                        if flag == False:
-                            break
-                        for i_2 in range(6):
-                            if mtx_abt_j[j_2][i_2] == text[t + 1]:
-                                # Если буквы по диагонали
-                                if j_1 != j_2 and i_1 != i_2:
-                                    enc_text = enc_text + \
-                                        mtx_abt_j[j_1][i_2] + \
-                                        mtx_abt_j[j_2][i_1]
-                                # Если буквы на одной строке
-                                elif j_1 == j_2 and i_1 != i_2:
-                                    enc_text = enc_text + mtx_abt_j[j_1][(i_1 + 1) % 6] + mtx_abt_j[j_2][
-                                        (i_2 + 1) % 6]  # %6 для предотвращения выхода за строку
-                                # Если буквы в одном столбце
-                                elif j_1 != j_2 and i_1 == i_2:
-                                    enc_text = enc_text + mtx_abt_j[(j_1 - 1) % 5][i_1] + mtx_abt_j[(j_2 - 1) % 5][
-                                        i_2]  # %5 для предотвращения выхода за столбец
-                                # Если буквы совпадают
-                                elif j_1 == j_2 and i_1 == i_2:
-                                    enc_text = enc_text + \
-                                        mtx_abt_j[j_1][i_1] + \
-                                        mtx_abt_j[j_1][i_1]
-                                print(
-                                    " {}{} -> {}{}".format(text[t], text[t + 1], enc_text[t], enc_text[t + 1]))
-                                flag = False
-                                break
-    enc_text_final_playf = "{}".format(enc_text)
-    messagebox.showinfo("Зашифровка", enc_text_final_playf)
+        j1, i1, j2, i2 = -1, -1, -1, -1
+        for j in range(5):
+            for i in range(6):
+                if mtx[j][i] == text[t]:
+                    j1, i1 = j, i
+                if mtx[j][i] == text[t + 1]:
+                    j2, i2 = j, i
+        if j1 == -1 or j2 == -1:
+            enc_text += text[t:t+2]
+            continue
+        if j1 != j2 and i1 != i2:
+            enc_text += mtx[j1][i2] + mtx[j2][i1]
+        elif j1 == j2 and i1 != i2:
+            enc_text += mtx[j1][(i1 + 1) % 6] + mtx[j2][(i2 + 1) % 6]
+        elif j1 != j2 and i1 == i2:
+            enc_text += mtx[(j1 - 1) % 5][i1] + mtx[(j2 - 1) % 5][i2]
+        else:
+            enc_text += mtx[j1][i1] + mtx[j1][i1]
+    return enc_text
 
 
-def playfer_decrypt():
-    # инициализация алфавита
-    alphavite_lower = ['а', 'б', 'в', 'г', 'д',
-                       'е', 'ж', 'з', 'и', 'к',
-                       'л', 'м', 'н', 'о', 'п',
-                       'р', 'с', 'т', 'у', 'ф',
-                       'х', 'ц', 'ч', 'ш', 'щ',
-                       'ь', 'ы', 'э', 'ю', 'я']
-
-    # text = input(" Введите текст (без пробелов и небуквенных символов): ").lower()  # Вводим текст
-    # key = input(" Введите ключ (без повторяющихся символов): ").lower()  # Вводим ключ
-    text = enc_text_final_playf
-    if enc_text_final_playf == "":
-        text = message.get().lower()
-    key = message2.get().lower()
-    for kryak in text:
-        if kryak == ',':
-            text = text.replace(kryak, 'зпт')
-        elif kryak == ".":
-            text = text.replace(kryak, "тчк")
-        elif kryak not in alphavite_lower:
-            text = text.replace(kryak, '')
-
-    # Формируем алфавит
-    new_alphabet = []  # Заготовка под новый алфавит
-
+def playfer_decrypt(text, key):
+    alphavite_lower = list('абвгдежзиклмнопрстуфхцчшщьыэюя')
+    text = text.lower()
+    for ch in list(text):
+        if ch not in alphavite_lower:
+            text = text.replace(ch, '')
+    new_alphabet = []
     for i in range(len(key)):
-        new_alphabet.append(key[i])  # Заполняем новый алфавит значением ключа
-    for i in range(len(alphavite_lower)):
-        bool_buff = False  # Буфер для проверки вхождения символа в алфавит ниже
-        for j in range(len(key)):
-            if alphavite_lower[i] == key[j]:
-                # Если находим вхождение символа алфавита в ключ, то прерываем цикл и переходим к другому символу
-                bool_buff = True
-                break
-        if bool_buff == False:  # Если не нашли вхождение символа алфавита в ключ, то записываем его в новый алфавит
-            new_alphabet.append(alphavite_lower[i])  # Заполняем алфавит
-    print(" new_alphabet = {}".format(new_alphabet))
-
-    # Формируем матричный алфавит
-    mtx_abt_j = []  # Заготовка под матричный алфавит по j
+        if key[i] not in new_alphabet:
+            new_alphabet.append(key[i])
+    for ch in alphavite_lower:
+        if ch not in new_alphabet:
+            new_alphabet.append(ch)
+    mtx = []
     counter = 0
     for j in range(5):
-        mtx_abt_i = []  # Заготовка под матричный алфавит по i в j
+        row = []
         for i in range(6):
-            # Добавляем букву в матрицу
-            mtx_abt_i.append(new_alphabet[counter])
-            counter = counter + 1
-        mtx_abt_j.append(mtx_abt_i)
-    print(" mtx_abt = {}".format(mtx_abt_j))
-    # Поправляем текст
-    if len(text) % 2 == 1:  # Если последняя биграмма состоит из одной буквы, то добавляем букву в конец
-        text = text + "я"
-    print(" text = {}".format(text))
-    # Расшифровываем
+            row.append(new_alphabet[counter])
+            counter += 1
+        mtx.append(row)
+    if len(text) % 2 == 1:
+        text += "я"
     enc_text = ""
     for t in range(0, len(text), 2):
-        flag = True  # флаг для выхода из всех циклов
-        for j_1 in range(5):
-            if flag == False:
-                break
-            for i_1 in range(6):
-                if flag == False:
-                    break
-                if mtx_abt_j[j_1][i_1] == text[t]:
-                    for j_2 in range(5):
-                        if flag == False:
-                            break
-                        for i_2 in range(6):
-                            if mtx_abt_j[j_2][i_2] == text[t + 1]:
-                                # Если буквы по диагонали
-                                if j_1 != j_2 and i_1 != i_2:
-                                    enc_text = enc_text + \
-                                        mtx_abt_j[j_1][i_2] + \
-                                        mtx_abt_j[j_2][i_1]
-                                # Если буквы на одной строке
-                                elif j_1 == j_2 and i_1 != i_2:
-                                    enc_text = enc_text + mtx_abt_j[j_1][(i_1 - 1) % 6] + mtx_abt_j[j_2][
-                                        (i_2 - 1) % 6]  # %6 для предотвращения выхода за строку
-                                # Если буквы в одном столбце
-                                elif j_1 != j_2 and i_1 == i_2:
-                                    enc_text = enc_text + mtx_abt_j[(j_1 + 1) % 5][i_1] + mtx_abt_j[(j_2 + 1) % 5][
-                                        i_2]  # %5 для предотвращения выхода за столбец
-                                # Если буквы совпадают
-                                elif j_1 == j_2 and i_1 == i_2:
-                                    enc_text = enc_text + \
-                                        mtx_abt_j[j_1][i_1] + \
-                                        mtx_abt_j[j_1][i_1]
-                                print(
-                                    " {}{} -> {}{}".format(text[t], text[t + 1], enc_text[t], enc_text[t + 1]))
-                                flag = False
-                                break
-    messagebox.showinfo("Расшифровка", "{}".format(enc_text))
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-# Вертикальная перестановка/////////////////////////////////////////////////////////////////////////////////////
+        j1, i1, j2, i2 = -1, -1, -1, -1
+        for j in range(5):
+            for i in range(6):
+                if mtx[j][i] == text[t]:
+                    j1, i1 = j, i
+                if mtx[j][i] == text[t + 1]:
+                    j2, i2 = j, i
+        if j1 == -1 or j2 == -1:
+            enc_text += text[t:t+2]
+            continue
+        if j1 != j2 and i1 != i2:
+            enc_text += mtx[j1][i2] + mtx[j2][i1]
+        elif j1 == j2 and i1 != i2:
+            enc_text += mtx[j1][(i1 - 1) % 6] + mtx[j2][(i2 - 1) % 6]
+        elif j1 != j2 and i1 == i2:
+            enc_text += mtx[(j1 + 1) % 5][i1] + mtx[(j2 + 1) % 5][i2]
+        else:
+            enc_text += mtx[j1][i1] + mtx[j1][i1]
+    return enc_text
 
 
-def vertical_change_encrypt_decrypt():
-    global encrypted_matrix, split_msg
-    alphabet_lower = {'а': 0, 'б': 1, 'в': 2, 'г': 3, 'д': 4,
-                      'е': 5, 'ж': 6, 'з': 7, 'и': 8, 'й': 9,
-                      'к': 10, 'л': 11, 'м': 12, 'н': 13, 'о': 14,
-                      'п': 15, 'р': 16, 'с': 17, 'т': 18, 'у': 19,
-                      'ф': 20, 'х': 21, 'ц': 22, 'ч': 23, 'ш': 24,
-                      'щ': 25, 'ъ': 26, 'ы': 27, 'ь': 28, 'э': 29,
-                      'ю': 30, 'я': 31, ' ': 32, ",": 33, ".": 34,
-                      'А': 35, 'Б': 36, 'В': 37, "Г": 38, "Д": 39,
-                      'Е': 40, 'Ж': 41, 'З': 42, 'И': 43, 'Й': 44,
-                      'К': 45, 'Л': 46, 'М': 47, 'Н': 48, 'О': 49,
-                      'П': 50, 'Р': 51, 'С': 52, 'Т': 53, 'У': 54,
-                      'Ф': 55, 'Х': 56, 'Ц': 57, 'Ч': 58, 'Ш': 59,
-                      'Щ': 60, 'Ъ': 61, 'Ы': 62, 'Ь': 63, 'Э': 64,
-                      'Ю': 65, 'Я': 66, '!': 67, "?": 68, ";": 69}
-
-    key = message2.get()
+# --- Vertical transposition ---
+def vertical_change(text, key):
+    alphabet_lower = {
+        'а': 0, 'б': 1, 'в': 2, 'г': 3, 'д': 4, 'е': 5, 'ж': 6, 'з': 7,
+        'и': 8, 'й': 9, 'к': 10, 'л': 11, 'м': 12, 'н': 13, 'о': 14, 'п': 15,
+        'р': 16, 'с': 17, 'т': 18, 'у': 19, 'ф': 20, 'х': 21, 'ц': 22, 'ч': 23,
+        'ш': 24, 'щ': 25, 'ъ': 26, 'ы': 27, 'ь': 28, 'э': 29, 'ю': 30, 'я': 31,
+        ' ': 32, ",": 33, ".": 34, 'А': 35, 'Б': 36, 'В': 37, "Г": 38, "Д": 39,
+        'Е': 40, 'Ж': 41, 'З': 42, 'И': 43, 'Й': 44, 'К': 45, 'Л': 46, 'М': 47,
+        'Н': 48, 'О': 49, 'П': 50, 'Р': 51, 'С': 52, 'Т': 53, 'У': 54, 'Ф': 55,
+        'Х': 56, 'Ц': 57, 'Ч': 58, 'Ш': 59, 'Щ': 60, 'Ъ': 61, 'Ы': 62, 'Ь': 63,
+        'Э': 64, 'Ю': 65, 'Я': 66, '!': 67, "?": 68, ";": 69
+    }
     key_len = len(key)
-    # print("Длина ключа:", key_len)
-    msg = message.get()
+    msg = text
     while len(msg) < key_len * key_len:
         msg += '.'
-    # print("Длина фразы:", len(msg))
     msg_pl_key = key + msg
     list_msg = list(msg_pl_key)
-    split_msg = [list_msg[i:i + key_len]
-                 for i in range(0, len(list_msg), key_len)]
+    split_msg = [list_msg[i:i + key_len] for i in range(0, len(list_msg), key_len)]
+    coded = []
     for i in range(len(split_msg)):
         for j in range(len(split_msg[i])):
-            print(split_msg[i][j], end=" ")
-        print()
-    coded = list()
-    for i in range(len(split_msg)):
-        for j in range(len(split_msg[i])):
-            print(int(alphabet_lower.get(split_msg[i][j])), end=" ")
-            coded.append(int(alphabet_lower.get(split_msg[i][j])))
-        print()
+            val = alphabet_lower.get(split_msg[i][j], 34)
+            coded.append(val)
     split_coded = [coded[i:i + key_len] for i in range(0, len(coded), key_len)]
-    # сортировка ключа и шифрование таблицы
-    encrypted_matrix = list()
-    # print("\nЗашифрованная матрица: ")
+    encrypted_matrix = []
 
     def sortRow(keylen, badlist):
         k = key_len - 1
@@ -706,544 +496,569 @@ def vertical_change_encrypt_decrypt():
             k -= 1
         for i in range(len(badlist)):
             for j in range(keylen):
-                # print("%4d" % badlist[i][j], end='')
                 encrypted_matrix.append(badlist[i][j])
-            # print()
 
     sortRow(key_len, split_coded)
-    split_encrypted = [encrypted_matrix[i:i + key_len]
-                       for i in range(0, len(encrypted_matrix), key_len)]
-    # print("Зашифрованный текст:", split_encrypted)
-    # print("\nЗашифрованный текст: ")
+    split_encrypted = [encrypted_matrix[i:i + key_len] for i in range(0, len(encrypted_matrix), key_len)]
 
     def get_key(d, value):
         for k, v in d.items():
             if v == value:
                 return k
 
-    code = ''
-    for i in range(len(split_encrypted)):
+    enc_result = ''
+    for i in range(1, len(split_encrypted)):
         for j in range(len(split_encrypted[i])):
-            # print(get_key(alphabet_lower, split_encrypted[i][j]), end=" ")
-            code += get_key(alphabet_lower, split_encrypted[i][j])
-    # messagebox.showinfo("Зашифровка", code)
+            ch = get_key(alphabet_lower, split_encrypted[i][j])
+            if ch:
+                enc_result += ch
 
-    # расшифровка
-    decrypted_matrix = list()
-
-    def sortRowDec(keylen, badlist):
-        k = keylen - 1
-        while k > 0:
-            ind = 0
-            for j in range(k + 1):
-                if badlist[0][j] > badlist[0][ind]:
-                    ind = j
-            for i in range(len(badlist)):
-                m = badlist[i][ind]
-                badlist[i][ind] = badlist[i][k]
-                badlist[i][k] = m
-            k -= 1
-            for i in range(len(badlist)):
-                for j in range(keylen):
-                    print("%4d" % badlist[i][j], end='')
-                    decrypted_matrix.append(badlist[i][j])
-                print()
-
-    split_decrypted = [encrypted_matrix[i:i + key_len]
-                       for i in range(0, len(encrypted_matrix), key_len)]
-    sortRowDec(key_len, split_decrypted)
-    decode = ""
+    dec_result = ""
     for i in range(1, len(split_msg)):
-        for j in range(0, len(split_msg[i])):
-            decode += split_msg[i][j] + " "
+        for j in range(len(split_msg[i])):
+            dec_result += split_msg[i][j]
 
-    return code, decode
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-# Диффи-Хэллман/////////////////////////////////////////////////////////////////////////////////////////////////
+    return enc_result, dec_result
 
 
-def diffie_hellman(p, g, ka, kb):
-    change_success = ""
-    # p = p = int(input("Введите простое число P: "))        # Простое число
-    # g = int(input("Введите натуральное число G: "))  # Натуральное число
+# --- Main GUI Application ---
+class CipherApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Python Cipher Suite")
+        self.root.geometry("750x650")
+        self.root.configure(bg=DARK_BG)
+        self.root.minsize(700, 600)
 
-    if g ** (p - 1) % p != 1:
-        messagebox.showinfo("Ошибка", "Введите другие числа P и G!")
-        # raise SystemExit
-    else:
-        # Секретное число
-        # ka = int(input("Введите натуральное (секретное) число Алисы - kа: "))
-        # a = 41 Натуральное число Алисы
-        # kb = int(input("Введите натуральное (секретное) число Боба - kb: "))
-        # b = 12 Натуральное число Боба
-        # e = 31 # Натуральное число Евы
+        self.code = ''
+        self.selected_algo = tk.StringVar(value=ALGORITHMS[0])
+        self.result_var = tk.StringVar(value="")
 
-        # Открытый ключ
-        YA = g ** ka % p  # Алиса
-        YB = g ** kb % p  # Боб
-        # E = g**e%p   # Ева
-        change_success = "Открытый ключ Артём: " + \
-            str(YA) + "\nОткрытый ключ Руди: " + str(YB) + '\n'  # , E
+        self._setup_styles()
+        self._build_ui()
 
-        # Секретный ключ
-        K1 = YB ** ka % p  # Key300
-        K2 = YA ** kb % p  # Ключ
-        # kE = A**e%p     # Key
-        change_success += "Приватный ключ Артём: " + \
-            str(K1) + "\nПриватный ключ Руди: " + str(K2)  # , kE
-        messagebox.showinfo("Итоги обмена ключами", change_success)
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    def _setup_styles(self):
+        style = ttk.Style()
+        style.theme_use('clam')
 
-# Функции вывода////////////////////////////////////////////////////////////////////////////////////////////////
+        style.configure('TFrame', background=DARK_BG)
+        style.configure('Surface.TFrame', background=DARK_SURFACE)
+        style.configure('TLabel', background=DARK_BG, foreground=TEXT_PRIMARY, font=('Segoe UI', 10))
+        style.configure('Title.TLabel', background=DARK_BG, foreground=TEXT_PRIMARY, font=('Segoe UI', 18, 'bold'))
+        style.configure('Subtitle.TLabel', background=DARK_BG, foreground=TEXT_SECONDARY, font=('Segoe UI', 9))
+        style.configure('Section.TLabel', background=DARK_SURFACE, foreground=TEXT_PRIMARY, font=('Segoe UI', 10, 'bold'))
 
+        style.configure('TCombobox', fieldbackground=DARK_SURFACE, background=DARK_SURFACE,
+                        foreground=TEXT_PRIMARY, selectbackground=ACCENT, borderwidth=1)
+        style.map('TCombobox', fieldbackground=[('readonly', DARK_SURFACE)])
 
-def proccess_crypt():
-    select()
-    global text, key, MatrixLength, MatrixMod, MatrixSquare, alpha
-    # .,!/{}\'\"
-    alpha = tuple("АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ .,!/{}\'\"1234567890")
-    MatrixLength = 3
-    MatrixMod = len(alpha)
-    MatrixSquare = MatrixLength * MatrixLength
-    text = message.get()
-    key = message2.get()
-    if krya == 1:
-        atbash_encrypt()
-    elif krya == 2:
-        # cesar_code()
-        try:
-            cesar_code()
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили открытый текст!")
-    # messagebox.showinfo("Зашифровка", code)  # Выводим зашифрованное сообщение
-    elif krya == 3:
-        polibiy_crypt()
-    elif krya == 4:
-        tritemiy_encrypt()
-    elif krya == 5:
-        try:
-            belazo_encrypt()
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили открытый текст!")
-    elif krya == 6:
-        try:
-            viginer_encrypt()
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили открытый текст!")
+        style.configure('Accent.TButton', background=ACCENT, foreground='white',
+                        font=('Segoe UI', 10, 'bold'), padding=(20, 10), borderwidth=0)
+        style.map('Accent.TButton', background=[('active', ACCENT_HOVER)])
 
-    elif krya == 7:   # Матричный шифр////////////////////////////////////////////////////////////////////
-        try:
-            cryptMode = "1"
-            global mainKey, final_matrich
-            startMessage = message.get().upper()
-            mainKey = message2.get().upper()
+        style.configure('Secondary.TButton', background=DARK_BORDER, foreground=TEXT_PRIMARY,
+                        font=('Segoe UI', 10), padding=(15, 8), borderwidth=0)
+        style.map('Secondary.TButton', background=[('active', DARK_SURFACE)])
 
-            if checkErrors(mainKey):
-                messagebox.showinfo("Ошибка!", checkErrors(mainKey))
-                raise SystemExit
-            for symbol in startMessage:
-                if symbol not in alpha:
-                    startMessage = startMessage.replace(symbol, '')
+        style.configure('Success.TButton', background=SUCCESS, foreground='white',
+                        font=('Segoe UI', 10, 'bold'), padding=(15, 8), borderwidth=0)
 
-            while len(startMessage) % MatrixLength != 0:
-                startMessage += startMessage[-1]
-            final_matrich = encryptDecrypt(cryptMode, startMessage, mainKey)
-            messagebox.showinfo('Зашифровка', final_matrich)
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили открытый текст!")
-    elif krya == 8:
-        try:
-            playfer_crypt()
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили открытый текст!")
-    elif krya == 9:
-        try:
-            otvet_tut = vertical_change_encrypt_decrypt()
-            messagebox.showinfo('Расшифровка', otvet_tut[0])
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили открытый текст!")
-    elif krya == 10:
-        try:
-            otvet = reshetka_kardano(int(key), text)
-            messagebox.showinfo("Зашифровка", otvet[0])
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели размер матрицы\nили открытый текст!")
-    elif krya == 11:
-        try:
-            otvet_notepad = notepad_shenona(text)
-            messagebox.showinfo(
-                "Зашифровка", otvet_notepad[0] + "\n" + otvet_notepad[1] + "\n" + otvet_notepad[2])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 12:
-        try:
-            otvet_a5 = a5_realisation(text)
-            messagebox.showinfo("Зашифровка", otvet_a5[0] + "\n" + otvet_a5[1] + "\n" + otvet_a5[2]
-                                + "\n" + otvet_a5[3])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 13:
-        try:
-            otvet_a5 = a52_realisation(text)
-            messagebox.showinfo("Зашифровка", otvet_a5[0] + "\n" + otvet_a5[1] + "\n" + otvet_a5[2]
-                                + "\n" + otvet_a5[3])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 14:
-        try:
-            try:
-                os.remove("crypted_file.txt")
-            except:
-                print("Готово к работе!")
-            f = open('file.txt', 'w')
-            f.write(str(text))
-            f.close()
-            way = '1'
-            AES_realize(way, key)
-            f2 = open("crypted_file.txt", 'r')
-            otvet = f2.read()
-            messagebox.showinfo("Зашифровка", otvet)
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели открытый текст или ключ на английском!")
-    elif krya == 15:
-        try:
-            otvet_magma_prZamena = prZamena(text)
-            messagebox.showinfo("Зашифровка", "16-ричное сообщение:" + "\n" + otvet_magma_prZamena[0] + "\n"
-                                + "Зашифрованное сообщение:" + "\n" + otvet_magma_prZamena[1] + "\n")
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 16:
-        try:
-            otvet_magma_gamma = Gamma(text)
-            messagebox.showinfo("Зашифровка", "Дополненое сообщение:" + "\n" + otvet_magma_gamma[0] + "\n"
-                                + "Зашифрованное сообщение:" + "\n" + otvet_magma_gamma[1])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 17:
-        try:
-            otvet_magmaOBR_gamma = GammaOBR(text)
-            messagebox.showinfo("Зашифровка", "Дополненое сообщение:" + "\n" + otvet_magmaOBR_gamma[0] + "\n"
-                                + "Зашифрованное сообщение:" + "\n" + otvet_magmaOBR_gamma[1])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 18:
-        try:
-            otvet_magma_imitovstavka = imitovstavka(text)
-            messagebox.showinfo("Зашифровка", "16-ричное сообщение:" + "\n" + otvet_magma_imitovstavka[0] + "\n"
-                                + "Имитовставка:" + "\n" + otvet_magma_imitovstavka[1])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 19:
-        try:
-            global otvet_rsa
-            otvet_rsa = RSA_realisation(text)
-            messagebox.showinfo("ЭЦП", otvet_rsa[0])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 20:
-        try:
-            global otvet_elGamal
-            otvet_elGamal = ElGamal_realisation(text)
-            messagebox.showinfo("ЭЦП", otvet_elGamal[0])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 21:
-        try:
-            global otvet_Gost_34_10_94
-            otvet_Gost_34_10_94 = GOST_34_10_94_realisation(text)
-            messagebox.showinfo("ЭЦП", otvet_Gost_34_10_94[0])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 22:
-        global otvet_Gost_34_10_2012
-        otvet_Gost_34_10_2012 = GOST_34_10_2012_realisation(text.lower())
-        messagebox.showinfo("ЭЦП", otvet_Gost_34_10_2012[0])
-        '''try:
-            global otvet_Gost_34_10_2012
-            otvet_Gost_34_10_2012 = GOST_34_10_2012_realisation(text)
-            messagebox.showinfo("ЭЦП", otvet_Gost_34_10_2012[0])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")'''
+    def _build_ui(self):
+        main_frame = ttk.Frame(self.root, style='TFrame', padding=20)
+        main_frame.pack(fill=tk.BOTH, expand=True)
 
+        # Header
+        header = ttk.Frame(main_frame, style='TFrame')
+        header.pack(fill=tk.X, pady=(0, 15))
+        ttk.Label(header, text="Python Cipher Suite", style='Title.TLabel').pack(side=tk.LEFT)
+        ttk.Label(header, text="v2.0 — Образовательный инструмент криптографии",
+                  style='Subtitle.TLabel').pack(side=tk.LEFT, padx=(15, 0), pady=(8, 0))
 
-def proccess_decrypt():
-    global text, key, MatrixLength, MatrixMod, MatrixSquare, alpha
-    # .,!/{}\'\"
-    alpha = tuple("АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ .,!/{}\'\"1234567890")
-    MatrixLength = 3
-    MatrixMod = len(alpha)
-    MatrixSquare = MatrixLength * MatrixLength
-    text = message.get()
-    key = message2.get()
-    if krya == 1:
-        atbash_decrypt()
-    elif krya == 2:
-        try:
-            cesar_decode()
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили зашифрованный текст!")
-    elif krya == 3:
-        polibiy_decrypt()
-    elif krya == 4:
-        tritemiy_decrypt()
-    elif krya == 5:
-        try:
-            belazo_decrypt()
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили зашифрованный текст!")
-    elif krya == 6:
-        try:
-            viginer_decrypt()
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили зашифрованный текст!")
+        # Algorithm selection
+        algo_frame = ttk.Frame(main_frame, style='TFrame')
+        algo_frame.pack(fill=tk.X, pady=(0, 12))
+        ttk.Label(algo_frame, text="Алгоритм:", style='TLabel').pack(side=tk.LEFT, padx=(0, 10))
+        self.combo = ttk.Combobox(algo_frame, textvariable=self.selected_algo, values=ALGORITHMS,
+                                  state='readonly', width=40, font=('Segoe UI', 10))
+        self.combo.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-    elif krya == 7:   # Матричный шифр////////////////////////////////////////////////////////////////////
-        try:
-            cryptMode = "2"
-            global mainKey, startMessage2
-            startMessage2 = final_matrich
-            if final_matrich == "":
-                startMessage2 = message.get().upper()
-            mainKey = message2.get().upper()
-            if checkErrors(mainKey):
-                messagebox.showinfo("Ошибка!", checkErrors(mainKey))
-                raise SystemExit
-            for symbol in startMessage2:
-                if symbol not in alpha:
-                    startMessage = startMessage2.replace(symbol, '')
+        # Input fields
+        input_frame = ttk.Frame(main_frame, style='TFrame')
+        input_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 12))
 
-            while len(startMessage2) % MatrixLength != 0:
-                startMessage2 += startMessage2[-1]
+        # Text input
+        text_label_frame = ttk.Frame(input_frame, style='TFrame')
+        text_label_frame.pack(fill=tk.X, pady=(0, 4))
+        ttk.Label(text_label_frame, text="Текст для обработки:", style='TLabel').pack(side=tk.LEFT)
 
-            messagebox.showinfo('Расшифровка', encryptDecrypt(
-                cryptMode, startMessage2, mainKey))
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили зашифрованный текст!")
-    elif krya == 8:
-        try:
-            playfer_decrypt()
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили зашифрованный текст!")
-    elif krya == 9:
+        self.text_input = tk.Text(input_frame, height=5, bg=DARK_SURFACE, fg=TEXT_PRIMARY,
+                                  insertbackground=TEXT_PRIMARY, font=('Consolas', 11),
+                                  relief=tk.FLAT, borderwidth=0, padx=10, pady=8,
+                                  selectbackground=ACCENT, wrap=tk.WORD)
+        self.text_input.pack(fill=tk.X, pady=(0, 10))
+
+        # Key input
+        key_frame = ttk.Frame(input_frame, style='TFrame')
+        key_frame.pack(fill=tk.X, pady=(0, 4))
+        ttk.Label(key_frame, text="Ключ (если требуется):", style='TLabel').pack(side=tk.LEFT)
+
+        self.key_input = tk.Entry(input_frame, bg=DARK_SURFACE, fg=TEXT_PRIMARY,
+                                  insertbackground=TEXT_PRIMARY, font=('Consolas', 11),
+                                  relief=tk.FLAT, borderwidth=0)
+        self.key_input.pack(fill=tk.X, ipady=8, pady=(0, 15))
+
+        # Buttons
+        btn_frame = ttk.Frame(main_frame, style='TFrame')
+        btn_frame.pack(fill=tk.X, pady=(0, 15))
+
+        encrypt_btn = tk.Button(btn_frame, text="Зашифровать", bg=ACCENT, fg='white',
+                                font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, cursor='hand2',
+                                activebackground=ACCENT_HOVER, activeforeground='white',
+                                padx=25, pady=10, command=self._encrypt)
+        encrypt_btn.pack(side=tk.LEFT, padx=(0, 10))
+
+        decrypt_btn = tk.Button(btn_frame, text="Расшифровать", bg=DARK_BORDER, fg=TEXT_PRIMARY,
+                                font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, cursor='hand2',
+                                activebackground=DARK_SURFACE, activeforeground=TEXT_PRIMARY,
+                                padx=25, pady=10, command=self._decrypt)
+        decrypt_btn.pack(side=tk.LEFT, padx=(0, 10))
+
+        clear_btn = tk.Button(btn_frame, text="Очистить", bg=DARK_SURFACE, fg=TEXT_SECONDARY,
+                              font=('Segoe UI', 10), relief=tk.FLAT, cursor='hand2',
+                              activebackground=DARK_BORDER, activeforeground=TEXT_PRIMARY,
+                              padx=15, pady=10, command=self._clear)
+        clear_btn.pack(side=tk.LEFT, padx=(0, 10))
+
+        dh_btn = tk.Button(btn_frame, text="Диффи-Хэллман", bg=DARK_SURFACE, fg=SUCCESS,
+                           font=('Segoe UI', 10), relief=tk.FLAT, cursor='hand2',
+                           activebackground=DARK_BORDER, activeforeground=SUCCESS,
+                           padx=15, pady=10, command=self._open_diffie_hellman)
+        dh_btn.pack(side=tk.RIGHT)
+
+        # Result
+        result_label_frame = ttk.Frame(main_frame, style='TFrame')
+        result_label_frame.pack(fill=tk.X, pady=(0, 4))
+        ttk.Label(result_label_frame, text="Результат:", style='TLabel').pack(side=tk.LEFT)
+
+        self.result_output = tk.Text(main_frame, height=6, bg=DARK_SURFACE, fg=SUCCESS,
+                                     font=('Consolas', 11), relief=tk.FLAT, borderwidth=0,
+                                     padx=10, pady=8, wrap=tk.WORD, state=tk.DISABLED,
+                                     selectbackground=ACCENT)
+        self.result_output.pack(fill=tk.BOTH, expand=True)
+
+    def _get_text(self):
+        return self.text_input.get("1.0", tk.END).strip()
+
+    def _get_key(self):
+        return self.key_input.get().strip()
+
+    def _show_result(self, text, is_error=False):
+        self.result_output.config(state=tk.NORMAL)
+        self.result_output.delete("1.0", tk.END)
+        self.result_output.config(fg=ERROR if is_error else SUCCESS)
+        self.result_output.insert("1.0", text)
+        self.result_output.config(state=tk.DISABLED)
+
+    def _encrypt(self):
+        global mainKey
+        algo = self.selected_algo.get()
+        text = self._get_text()
+        key = self._get_key()
+
+        if not text:
+            self._show_result("Введите текст для шифрования!", is_error=True)
+            return
 
         try:
-            otvet_tut = vertical_change_encrypt_decrypt()
-            messagebox.showinfo('Расшифровка', otvet_tut[1])
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели ключ\nили зашифрованный текст!")
-    elif krya == 10:
+            if algo == "Атбаш":
+                result = atbash_encrypt(text)
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Цезарь":
+                if not key:
+                    self._show_result("Введите числовой ключ (дистанцию)!", is_error=True)
+                    return
+                result = cesar_encrypt(text, key)
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Полибий":
+                result = polibiy_encrypt(text)
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Тритемий":
+                result = tritemiy_encrypt(text)
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Белазо":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                result = belazo_encrypt(text, key)
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Виженер":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                result = vigener_encrypt(text, key)
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Матричный":
+                if not key or len(key.upper()) != 9:
+                    self._show_result("Ключ должен быть длиной 9 символов!", is_error=True)
+                    return
+                mainKey = key.upper()
+                err = checkErrors(mainKey)
+                if err:
+                    self._show_result(err, is_error=True)
+                    return
+                msg = text.upper()
+                for s in msg:
+                    if s not in alpha:
+                        msg = msg.replace(s, '')
+                while len(msg) % MatrixLength != 0:
+                    msg += msg[-1]
+                result = encryptDecrypt('1', msg, mainKey)
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Плейфер":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                result = playfer_crypt(text, key.lower())
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Вертикальная перестановка":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                enc, _ = vertical_change(text, key)
+                self.code = enc
+                self._show_result(enc)
+
+            elif algo == "Решётка Кардано":
+                if not key or not key.isdigit():
+                    self._show_result("Введите размер матрицы (число)!", is_error=True)
+                    return
+                result = reshetka_kardano(int(key), text)
+                self.code = result[0]
+                self._show_result(result[0])
+
+            elif algo == "Одноразовый блокнот Шеннона":
+                result = notepad_shenona(text)
+                self._show_result(result[0] + "\n" + result[1] + "\n" + result[2])
+
+            elif algo == "A5/1":
+                result = a5_realisation(text)
+                self._show_result(result[0] + "\n" + result[1] + "\n" + result[2] + "\n" + result[3])
+
+            elif algo == "A5/2":
+                result = a52_realisation(text)
+                self._show_result(result[0] + "\n" + result[1] + "\n" + result[2] + "\n" + result[3])
+
+            elif algo == "AES":
+                if not key:
+                    self._show_result("Введите ключ (англ., до 16 символов)!", is_error=True)
+                    return
+                try:
+                    os.remove("crypted_file.txt")
+                except OSError:
+                    pass
+                with open('file.txt', 'w') as f:
+                    f.write(text)
+                AES_realize('1', key)
+                with open("crypted_file.txt", 'r') as f2:
+                    result = f2.read()
+                self.code = result
+                self._show_result(result)
+
+            elif algo == "Магма (Простая замена)":
+                result = prZamena(text)
+                self._show_result("16-ричное сообщение:\n" + result[0] + "\nЗашифровано:\n" + result[1])
+
+            elif algo == "Магма (Гаммирование)":
+                result = Gamma(text)
+                self._show_result("Дополненное сообщение:\n" + result[0] + "\nЗашифровано:\n" + result[1])
+
+            elif algo == "Магма (Обратное гаммирование)":
+                result = GammaOBR(text)
+                self._show_result("Дополненное сообщение:\n" + result[0] + "\nЗашифровано:\n" + result[1])
+
+            elif algo == "Магма (Имитовставка)":
+                result = imitovstavka(text)
+                self._show_result("16-ричное сообщение:\n" + result[0] + "\nИмитовставка:\n" + result[1])
+
+            elif algo == "RSA":
+                result = RSA_realisation(text)
+                self._show_result("ЭЦП:\n" + result[0])
+                self._rsa_result = result
+
+            elif algo == "El Gamal":
+                result = ElGamal_realisation(text)
+                self._show_result("ЭЦП:\n" + result[0])
+                self._elgamal_result = result
+
+            elif algo == "ГОСТ 34.10-94":
+                result = GOST_34_10_94_realisation(text)
+                self._show_result("ЭЦП:\n" + result[0])
+                self._gost94_result = result
+
+            elif algo == "ГОСТ 34.10-2012":
+                result = GOST_34_10_2012_realisation(text.lower())
+                self._show_result("ЭЦП:\n" + result[0])
+                self._gost2012_result = result
+
+        except Exception as e:
+            self._show_result(f"Ошибка: {str(e)}", is_error=True)
+
+    def _decrypt(self):
+        global mainKey
+        algo = self.selected_algo.get()
+        text = self._get_text()
+        key = self._get_key()
+
+        if not text and not self.code:
+            self._show_result("Введите текст для расшифровки!", is_error=True)
+            return
+
         try:
-            otvet = reshetka_kardano(int(key), text)
-            messagebox.showinfo("Зашифровка", otvet[1])
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели размер матрицы\nили открытый текст!")
-    elif krya == 11:
+            if algo == "Атбаш":
+                src = self.code if self.code else text
+                result = atbash_decrypt(src)
+                self._show_result(result)
+
+            elif algo == "Цезарь":
+                if not key:
+                    self._show_result("Введите числовой ключ!", is_error=True)
+                    return
+                src = self.code if self.code else text
+                result = cesar_decrypt(src, key)
+                self._show_result(result)
+
+            elif algo == "Полибий":
+                src = self.code if self.code else text
+                result = polibiy_decrypt(src)
+                self._show_result(result)
+
+            elif algo == "Тритемий":
+                src = self.code if self.code else text
+                result = tritemiy_decrypt(src)
+                self._show_result(result)
+
+            elif algo == "Белазо":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                src = self.code if self.code else text
+                result = belazo_decrypt(src, key)
+                self._show_result(result)
+
+            elif algo == "Виженер":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                src = self.code if self.code else text
+                result = vigener_decrypt(src, key)
+                self._show_result(result)
+
+            elif algo == "Матричный":
+                if not key or len(key.upper()) != 9:
+                    self._show_result("Ключ должен быть длиной 9 символов!", is_error=True)
+                    return
+                mainKey = key.upper()
+                err = checkErrors(mainKey)
+                if err:
+                    self._show_result(err, is_error=True)
+                    return
+                src = self.code if self.code else text.upper()
+                while len(src) % MatrixLength != 0:
+                    src += src[-1]
+                result = encryptDecrypt('2', src, mainKey)
+                self._show_result(result)
+
+            elif algo == "Плейфер":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                src = self.code if self.code else text
+                result = playfer_decrypt(src, key.lower())
+                self._show_result(result)
+
+            elif algo == "Вертикальная перестановка":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                _, dec = vertical_change(text, key)
+                self._show_result(dec)
+
+            elif algo == "Решётка Кардано":
+                if not key or not key.isdigit():
+                    self._show_result("Введите размер матрицы (число)!", is_error=True)
+                    return
+                result = reshetka_kardano(int(key), text)
+                self._show_result(result[1])
+
+            elif algo == "Одноразовый блокнот Шеннона":
+                result = notepad_shenona(text)
+                self._show_result(result[3] + "\n" + result[4])
+
+            elif algo == "A5/1":
+                result = a5_realisation(text)
+                self._show_result(result[4] + "\n" + result[5])
+
+            elif algo == "A5/2":
+                result = a52_realisation(text)
+                self._show_result(result[4] + "\n" + result[5])
+
+            elif algo == "AES":
+                if not key:
+                    self._show_result("Введите ключ!", is_error=True)
+                    return
+                try:
+                    os.remove("decrypted_crypted_file.txt")
+                except OSError:
+                    pass
+                AES_realize('2', key)
+                with open("decrypted_crypted_file.txt", 'r') as f2:
+                    result = f2.read()
+                self._show_result(result)
+
+            elif algo == "Магма (Простая замена)":
+                result = prZamena(text)
+                self._show_result("Расшифровано (16-рич):\n" + result[2] + "\nРасшифрованный текст:\n" + result[3])
+
+            elif algo == "Магма (Гаммирование)":
+                result = Gamma(text)
+                self._show_result("Расшифрованное сообщение:\n" + result[2])
+
+            elif algo == "Магма (Обратное гаммирование)":
+                result = GammaOBR(text)
+                self._show_result("Расшифрованное сообщение:\n" + result[2])
+
+            elif algo == "Магма (Имитовставка)":
+                self._show_result("Имитовставку нельзя расшифровать!", is_error=True)
+
+            elif algo == "RSA":
+                if hasattr(self, '_rsa_result'):
+                    self._show_result("Проверка ЭЦП:\n" + self._rsa_result[1])
+                else:
+                    self._show_result("Сначала создайте ЭЦП (нажмите Зашифровать)!", is_error=True)
+
+            elif algo == "El Gamal":
+                if hasattr(self, '_elgamal_result'):
+                    self._show_result("Проверка ЭЦП:\n" + self._elgamal_result[1])
+                else:
+                    self._show_result("Сначала создайте ЭЦП (нажмите Зашифровать)!", is_error=True)
+
+            elif algo == "ГОСТ 34.10-94":
+                if hasattr(self, '_gost94_result'):
+                    self._show_result("Проверка ЭЦП:\n" + self._gost94_result[1])
+                else:
+                    self._show_result("Сначала создайте ЭЦП (нажмите Зашифровать)!", is_error=True)
+
+            elif algo == "ГОСТ 34.10-2012":
+                if hasattr(self, '_gost2012_result'):
+                    self._show_result("Проверка ЭЦП:\n" + self._gost2012_result[1])
+                else:
+                    self._show_result("Сначала создайте ЭЦП (нажмите Зашифровать)!", is_error=True)
+
+        except Exception as e:
+            self._show_result(f"Ошибка: {str(e)}", is_error=True)
+
+    def _clear(self):
+        self.text_input.delete("1.0", tk.END)
+        self.key_input.delete(0, tk.END)
+        self.result_output.config(state=tk.NORMAL)
+        self.result_output.delete("1.0", tk.END)
+        self.result_output.config(state=tk.DISABLED)
+        self.code = ''
+
+    def _open_diffie_hellman(self):
+        DiffieHellmanWindow(self.root)
+
+
+class DiffieHellmanWindow(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Обмен ключами Диффи-Хэллмана")
+        self.geometry("450x420")
+        self.configure(bg=DARK_BG)
+        self.resizable(False, False)
+        self._build_ui()
+
+    def _build_ui(self):
+        frame = ttk.Frame(self, style='TFrame', padding=25)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frame, text="Диффи-Хэллман", style='Title.TLabel').pack(pady=(0, 5))
+        ttk.Label(frame, text="Протокол обмена ключами", style='Subtitle.TLabel').pack(pady=(0, 20))
+
+        fields = [
+            ("Простое число P:", "p"),
+            ("Натуральное число G:", "g"),
+            ("Секретное число Алисы:", "ka"),
+            ("Секретное число Боба:", "kb"),
+        ]
+
+        self.entries = {}
+        for label_text, name in fields:
+            row = ttk.Frame(frame, style='TFrame')
+            row.pack(fill=tk.X, pady=5)
+            ttk.Label(row, text=label_text, style='TLabel', width=25).pack(side=tk.LEFT)
+            entry = tk.Entry(row, bg=DARK_SURFACE, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY,
+                             font=('Consolas', 11), relief=tk.FLAT, width=15)
+            entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=5)
+            self.entries[name] = entry
+
+        btn = tk.Button(frame, text="Обмен ключами", bg=SUCCESS, fg='white',
+                        font=('Segoe UI', 11, 'bold'), relief=tk.FLAT, cursor='hand2',
+                        activebackground='#059669', activeforeground='white',
+                        padx=20, pady=10, command=self._exchange)
+        btn.pack(pady=20)
+
+        self.result_label = tk.Label(frame, text="", bg=DARK_BG, fg=TEXT_PRIMARY,
+                                     font=('Consolas', 10), justify=tk.LEFT, wraplength=400)
+        self.result_label.pack(fill=tk.X)
+
+    def _exchange(self):
         try:
-            otvet_notepad = notepad_shenona(text)
-            messagebox.showinfo(
-                "Зашифровка", otvet_notepad[3] + "\n" + otvet_notepad[4])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 12:
-        try:
-            otvet_a5 = a5_realisation(text)
-            messagebox.showinfo(
-                "Расшифровка", otvet_a5[4] + "\n" + otvet_a5[5])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 13:
-        try:
-            otvet_a5 = a52_realisation(text)
-            messagebox.showinfo(
-                "Расшифровка", otvet_a5[4] + "\n" + otvet_a5[5])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 14:
-        try:
-            try:
-                os.remove("decrypted_crypted_file.txt")
-            except:
-                print("Готово к работе!")
-            way = '2'
-            AES_realize(way, key)
-            f2 = open("decrypted_crypted_file.txt", 'r')
-            otvet = f2.read()
-            messagebox.showinfo("Расшифровка", otvet)
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Вы не ввели открытый текст или ключ на английском!")
-    elif krya == 15:
-        try:
-            otvet_magma_prZamena = prZamena(text)
-            messagebox.showinfo("Расшифровка", "Расшифрованное 16-ричное сообщение:" + "\n" + otvet_magma_prZamena[2] + "\n"
-                                + "Расшифрованное сообщение:" + "\n" + otvet_magma_prZamena[3])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 16:
-        try:
-            otvet_magma_gamma = Gamma(text)
-            messagebox.showinfo(
-                "Расшифровка", "Расшифрованное сообщение:" + "\n" + otvet_magma_gamma[2])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 17:
-        try:
-            otvet_magmaOBR_gamma = GammaOBR(text)
-            messagebox.showinfo(
-                "Расшифровка", "Расшифрованное сообщение:" + "\n" + otvet_magmaOBR_gamma[2])
-        except:
-            messagebox.showinfo("Ошибка", "Вы не ввели открытый текст!")
-    elif krya == 18:
-        messagebox.showinfo("Ошибка", "Имитовставку нельзя расшифровать!")
-    elif krya == 19:
-        try:
-            messagebox.showinfo("Проверка ЭЦП", otvet_rsa[1])
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Сначала нужно создать ЭЦП!\nНажмите зашифровать!")
-    elif krya == 20:
-        try:
-            messagebox.showinfo("Проверка ЭЦП", otvet_elGamal[1])
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Сначала нужно создать ЭЦП!\nНажмите зашифровать!")
-    elif krya == 21:
-        try:
-            messagebox.showinfo("Проверка ЭЦП", otvet_Gost_34_10_94[1])
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Сначала нужно создать ЭЦП!\nНажмите зашифровать!")
-    elif krya == 22:
-        try:
-            messagebox.showinfo("Проверка ЭЦП", otvet_Gost_34_10_2012[1])
-        except:
-            messagebox.showinfo(
-                "Ошибка", "Сначала нужно создать ЭЦП!\nНажмите зашифровать!")
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            p = int(self.entries['p'].get())
+            g = int(self.entries['g'].get())
+            ka = int(self.entries['ka'].get())
+            kb = int(self.entries['kb'].get())
 
-# Очистка значений//////////////////////////////////////////////////////////////////////////////////////////////
+            if g ** (p - 1) % p != 1:
+                messagebox.showinfo("Ошибка", "g^(p-1) mod p != 1\nВведите другие числа P и G!")
+                return
+
+            YA = g ** ka % p
+            YB = g ** kb % p
+            K1 = YB ** ka % p
+            K2 = YA ** kb % p
+
+            result = (
+                f"Открытый ключ Алисы: {YA}\n"
+                f"Открытый ключ Боба: {YB}\n"
+                f"Общий секретный ключ: {K1}"
+            )
+            if K1 == K2:
+                result += "\n\nКлючи совпали!"
+            self.result_label.config(text=result, fg=SUCCESS)
+        except ValueError:
+            messagebox.showinfo("Ошибка", "Введите корректные числа!")
+        except Exception as e:
+            messagebox.showinfo("Ошибка", str(e))
 
 
-def clear_values():
-    global code, decode, key
-    code = ''
-    decode = ''
-    key = ''
-# //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-# Визуальная часть//////////////////////////////////////////////////////////////////////////////////////////////
-root = Tk()
-root.title("GUI")
-root.geometry("470x500+650+150")
-root["bg"] = "white"
-
-text_label1 = "текст"
-label1 = Label(text=text_label1, justify=LEFT)
-label1.place(x=200, y=60)
-
-text_label2 = "ключ"
-label2 = Label(text=text_label2, justify=LEFT)
-label2.place(x=230, y=120)
-
-message = StringVar()
-message2 = StringVar()
-
-message_entry = Entry(textvariable=message, width=40, bd=5)
-message_entry.place(x=250, y=100, anchor="c")
-
-message_entry2 = Entry(textvariable=message2, width=20, bd=5)
-message_entry2.place(x=250, y=160, anchor="c")
-
-button1 = Button(text="Зашифровать", background="#555", activebackground="#655",
-                 foreground="#ccc", padx="20", pady="8", font="16", command=proccess_crypt)
-button1.place(x=170, y=190)
-
-button2 = Button(text="Расшифровать", background="#555", activebackground="#655",
-                 foreground="#ccc", padx="16", pady="8", font="16", command=proccess_decrypt)
-button2.place(x=170, y=250)
-
-button3 = Button(text="Очистить\nзначения", background="#555", activebackground="#655",
-                 foreground="#ccc", padx="1", pady="1", font="16", command=clear_values)
-button3.place(x=350, y=200)
-
-
-# Создание формы для диффи-хэллмана/////////////////////////////////////////////////////////////////////////////
-def create_form():
-    Window()
-
-
-class Window(tk.Toplevel):
-    def __init__(self):
-        super().__init__(root)
-        self.init_window()
-
-    def init_window(self):
-        p = IntVar()
-        g = IntVar()
-        ka = IntVar()
-        kb = IntVar()
-        self.title("Диффи-Хэллман")
-        self.geometry("400x400+650+150")
-        global P_entry, G_entry, ka_entry, kb_entry
-        P_entry = Entry(self, textvariable=p, width=20, bd=5)
-        P_entry.place(x=220, y=70, anchor="c")
-        G_entry = Entry(self, textvariable=g, width=20, bd=5)
-        G_entry.place(x=220, y=130, anchor="c")
-        ka_entry = Entry(self, textvariable=ka, width=20, bd=5)
-        ka_entry.place(x=220, y=190, anchor="c")
-        kb_entry = Entry(self, textvariable=kb, width=20, bd=5)
-        kb_entry.place(x=220, y=250, anchor="c")
-        self.label_P = Label(self, text="P = ", justify=LEFT)
-        self.label_P.place(x=120, y=58)
-        self.label_G = Label(self, text="G = ", justify=LEFT)
-        self.label_G.place(x=120, y=118)
-        self.label_ka = Label(
-            self, text="Секретное число Артёма (натуральное)", justify=LEFT)
-        self.label_ka.place(x=115, y=150)
-        self.label_kb = Label(
-            self, text="Секретное число Руди (натуральное)", justify=LEFT)
-        self.label_kb.place(x=115, y=210)
-        button_change = Button(self, text="Обмен ключами", background="#555", activebackground="#655",
-                               foreground="#ccc", padx="20", pady="8", font="16",
-                               command=lambda: diffie_hellman(int(P_entry.get()), int(G_entry.get()), int(ka_entry.get()), int(kb_entry.get())))
-        button_change.place(x=133, y=280)
-
-
-button4 = Button(text="Диффи-Хэллман", background="#555", activebackground="#655",
-                 foreground="#ccc", padx="1", pady="1", font="16", command=create_form)
-button4.place(x=335, y=470)
-
-
-vibors = ["Атбаш", "Тритемий", "Плейфер",
-          "Решётка Кардано", "Одноразовый блокнот Шеннона", "A5/1", "AES",
-          "Магма (Простая замена)", "Магма (Гаммирование)", "Магма (Обратное гаммирование)", "Магма (Имитовставка)",
-          "RSA", "El Gamal", "ГОСТ 34.10-94", "ГОСТ 34.10-2012"]
-
-combotext = StringVar()
-
-combotext.set("Атбаш")
-
-combobox = ttk.Combobox(value=vibors, height=8, width=30, textvariable=combotext, state="readonly")\
-    .grid(row=2, sticky=W)
-
-root.mainloop()
-
-# Поговорка
-# Эта капуста зеленая, все равно что это зеленая капуста.
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = CipherApp(root)
+    root.mainloop()

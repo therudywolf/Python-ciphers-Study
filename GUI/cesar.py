@@ -5,16 +5,18 @@ decode = ""
 
 alphavite = ',.!:\'\"#?@[](){} '
 alphavite1 = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-alphavite2 = 'АБВГДДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЪЫЬЭЮЯ'
+alphavite2 = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
 
 for i in plainText:
-    global code
     if i.islower():
         code += alphavite1[(alphavite1.find(i) + distance) % len(alphavite1)]
     elif i.isupper():
         code += alphavite2[(alphavite2.find(i) + distance) % len(alphavite2)]
     else:
-        code += alphavite[(alphavite.find(i) + distance) % len(alphavite)]
+        if i in alphavite:
+            code += alphavite[(alphavite.find(i) + distance) % len(alphavite)]
+        else:
+            code += i
 print("Зашифровка:", code)
 
 for i in code:
@@ -23,5 +25,8 @@ for i in code:
     elif i.isupper():
         decode += alphavite2[(alphavite2.find(i) - distance) % len(alphavite2)]
     else:
-        decode += alphavite[(alphavite.find(i) - distance) % len(alphavite)]
+        if i in alphavite:
+            decode += alphavite[(alphavite.find(i) - distance) % len(alphavite)]
+        else:
+            decode += i
 print("Расшифровка:", decode)
