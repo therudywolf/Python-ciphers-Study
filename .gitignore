@@ -122,3 +122,22 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Test files
+test.txt
+test.txt.save
+crypted_file.txt
+
+# Environment variables
+.env.local
+.env.*.local
