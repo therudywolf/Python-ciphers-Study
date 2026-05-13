@@ -30,6 +30,31 @@ ALGORITHMS = [
 
 ALGO_MAP = {name: idx + 1 for idx, name in enumerate(ALGORITHMS)}
 
+ALGO_HELP = {
+    "Атбаш": {"key_label": "Ключ не требуется", "hint": "Симметричное преобразование без ключа.", "needs_key": False},
+    "Цезарь": {"key_label": "Сдвиг", "hint": "Введите целое число для сдвига алфавита.", "needs_key": True},
+    "Полибий": {"key_label": "Ключ не требуется", "hint": "Работает с кодированием символов по таблице.", "needs_key": False},
+    "Тритемий": {"key_label": "Ключ не требуется", "hint": "Прогрессивный сдвиг без отдельного ключа.", "needs_key": False},
+    "Белазо": {"key_label": "Текстовый ключ", "hint": "Введите буквенный ключ той же раскладки.", "needs_key": True},
+    "Виженер": {"key_label": "Текстовый ключ", "hint": "Введите короткий буквенный ключ.", "needs_key": True},
+    "Матричный": {"key_label": "Ключ 9 символов", "hint": "Ключ должен быть длиной ровно 9 символов.", "needs_key": True},
+    "Плейфер": {"key_label": "Текстовый ключ", "hint": "Ключ формирует таблицу Плейфера.", "needs_key": True},
+    "Вертикальная перестановка": {"key_label": "Текстовый ключ", "hint": "Ключ задает порядок столбцов.", "needs_key": True},
+    "Решётка Кардано": {"key_label": "Размер матрицы", "hint": "Введите целое число для размера квадратной матрицы.", "needs_key": True},
+    "Одноразовый блокнот Шеннона": {"key_label": "Ключ не требуется", "hint": "Ключ генерируется автоматически при каждом запуске.", "needs_key": False},
+    "A5/1": {"key_label": "Ключ не требуется", "hint": "Потоковый шифр с автоматически сгенерированной гаммой.", "needs_key": False},
+    "A5/2": {"key_label": "Ключ не требуется", "hint": "Потоковый шифр с автоматически сгенерированной гаммой.", "needs_key": False},
+    "AES": {"key_label": "Ключ AES", "hint": "Используйте английские символы. Практически ожидается ключ до 16 символов.", "needs_key": True},
+    "Магма (Простая замена)": {"key_label": "Ключ не требуется", "hint": "Результат выводится в учебном формате.", "needs_key": False},
+    "Магма (Гаммирование)": {"key_label": "Ключ не требуется", "hint": "Результат выводится с промежуточными значениями.", "needs_key": False},
+    "Магма (Обратное гаммирование)": {"key_label": "Ключ не требуется", "hint": "Результат выводится с промежуточными значениями.", "needs_key": False},
+    "Магма (Имитовставка)": {"key_label": "Ключ не требуется", "hint": "Этот режим формирует имитовставку, а не обратимое шифрование.", "needs_key": False},
+    "RSA": {"key_label": "Режим подписи", "hint": "Кнопка шифрования создает подпись, кнопка расшифрования выполняет проверку.", "needs_key": False},
+    "El Gamal": {"key_label": "Режим подписи", "hint": "Кнопка шифрования создает подпись, кнопка расшифрования выполняет проверку.", "needs_key": False},
+    "ГОСТ 34.10-94": {"key_label": "Режим подписи", "hint": "Кнопка шифрования создает подпись, кнопка расшифрования выполняет проверку.", "needs_key": False},
+    "ГОСТ 34.10-2012": {"key_label": "Режим подписи", "hint": "Кнопка шифрования создает подпись, кнопка расшифрования выполняет проверку.", "needs_key": False},
+}
+
 DARK_BG = "#1e1e2e"
 DARK_SURFACE = "#2d2d3f"
 DARK_BORDER = "#3d3d5c"
@@ -536,6 +561,7 @@ class CipherApp:
 
         self._setup_styles()
         self._build_ui()
+        self._on_algo_change()
 
     def _setup_styles(self):
         style = ttk.Style()
@@ -581,6 +607,10 @@ class CipherApp:
         self.combo = ttk.Combobox(algo_frame, textvariable=self.selected_algo, values=ALGORITHMS,
                                   state='readonly', width=40, font=('Segoe UI', 10))
         self.combo.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.combo.bind("<<ComboboxSelected>>", self._on_algo_change)
+
+        self.algo_hint = ttk.Label(main_frame, text="", style='Subtitle.TLabel')
+        self.algo_hint.pack(fill=tk.X, pady=(0, 10))
 
         # Input fields
         input_frame = ttk.Frame(main_frame, style='TFrame')
@@ -591,21 +621,29 @@ class CipherApp:
         text_label_frame.pack(fill=tk.X, pady=(0, 4))
         ttk.Label(text_label_frame, text="Текст для обработки:", style='TLabel').pack(side=tk.LEFT)
 
-        self.text_input = tk.Text(input_frame, height=5, bg=DARK_SURFACE, fg=TEXT_PRIMARY,
+        text_box = ttk.Frame(input_frame, style='Surface.TFrame')
+        text_box.pack(fill=tk.X, pady=(0, 10))
+        self.text_input = tk.Text(text_box, height=5, bg=DARK_SURFACE, fg=TEXT_PRIMARY,
                                   insertbackground=TEXT_PRIMARY, font=('Consolas', 11),
                                   relief=tk.FLAT, borderwidth=0, padx=10, pady=8,
                                   selectbackground=ACCENT, wrap=tk.WORD)
-        self.text_input.pack(fill=tk.X, pady=(0, 10))
+        text_scroll = tk.Scrollbar(text_box, command=self.text_input.yview)
+        self.text_input.configure(yscrollcommand=text_scroll.set)
+        self.text_input.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        text_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Key input
         key_frame = ttk.Frame(input_frame, style='TFrame')
         key_frame.pack(fill=tk.X, pady=(0, 4))
-        ttk.Label(key_frame, text="Ключ (если требуется):", style='TLabel').pack(side=tk.LEFT)
+        self.key_label = ttk.Label(key_frame, text="Ключ", style='TLabel')
+        self.key_label.pack(side=tk.LEFT)
 
         self.key_input = tk.Entry(input_frame, bg=DARK_SURFACE, fg=TEXT_PRIMARY,
                                   insertbackground=TEXT_PRIMARY, font=('Consolas', 11),
                                   relief=tk.FLAT, borderwidth=0)
         self.key_input.pack(fill=tk.X, ipady=8, pady=(0, 15))
+        self.key_hint = ttk.Label(input_frame, text="", style='Subtitle.TLabel')
+        self.key_hint.pack(fill=tk.X, pady=(0, 12))
 
         # Buttons
         btn_frame = ttk.Frame(main_frame, style='TFrame')
@@ -629,6 +667,12 @@ class CipherApp:
                               padx=15, pady=10, command=self._clear)
         clear_btn.pack(side=tk.LEFT, padx=(0, 10))
 
+        copy_btn = tk.Button(btn_frame, text="Копировать", bg=DARK_SURFACE, fg=TEXT_PRIMARY,
+                             font=('Segoe UI', 10), relief=tk.FLAT, cursor='hand2',
+                             activebackground=DARK_BORDER, activeforeground=TEXT_PRIMARY,
+                             padx=15, pady=10, command=self._copy_result)
+        copy_btn.pack(side=tk.LEFT, padx=(0, 10))
+
         dh_btn = tk.Button(btn_frame, text="Диффи-Хэллман", bg=DARK_SURFACE, fg=SUCCESS,
                            font=('Segoe UI', 10), relief=tk.FLAT, cursor='hand2',
                            activebackground=DARK_BORDER, activeforeground=SUCCESS,
@@ -640,11 +684,16 @@ class CipherApp:
         result_label_frame.pack(fill=tk.X, pady=(0, 4))
         ttk.Label(result_label_frame, text="Результат:", style='TLabel').pack(side=tk.LEFT)
 
-        self.result_output = tk.Text(main_frame, height=6, bg=DARK_SURFACE, fg=SUCCESS,
+        result_box = ttk.Frame(main_frame, style='Surface.TFrame')
+        result_box.pack(fill=tk.BOTH, expand=True)
+        self.result_output = tk.Text(result_box, height=6, bg=DARK_SURFACE, fg=SUCCESS,
                                      font=('Consolas', 11), relief=tk.FLAT, borderwidth=0,
                                      padx=10, pady=8, wrap=tk.WORD, state=tk.DISABLED,
                                      selectbackground=ACCENT)
-        self.result_output.pack(fill=tk.BOTH, expand=True)
+        result_scroll = tk.Scrollbar(result_box, command=self.result_output.yview)
+        self.result_output.configure(yscrollcommand=result_scroll.set)
+        self.result_output.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        result_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
     def _get_text(self):
         return self.text_input.get("1.0", tk.END).strip()
@@ -652,12 +701,30 @@ class CipherApp:
     def _get_key(self):
         return self.key_input.get().strip()
 
+    def _on_algo_change(self, _event=None):
+        meta = ALGO_HELP.get(self.selected_algo.get(), {})
+        self.key_label.config(text=meta.get("key_label", "Ключ"))
+        self.key_hint.config(text=meta.get("hint", ""))
+        self.algo_hint.config(text=meta.get("hint", ""))
+        if meta.get("needs_key", True):
+            self.key_input.config(state=tk.NORMAL)
+        else:
+            self.key_input.delete(0, tk.END)
+            self.key_input.config(state=tk.DISABLED)
+
     def _show_result(self, text, is_error=False):
         self.result_output.config(state=tk.NORMAL)
         self.result_output.delete("1.0", tk.END)
         self.result_output.config(fg=ERROR if is_error else SUCCESS)
         self.result_output.insert("1.0", text)
         self.result_output.config(state=tk.DISABLED)
+
+    def _copy_result(self):
+        text = self.result_output.get("1.0", tk.END).strip()
+        if not text:
+            return
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
 
     def _encrypt(self):
         global mainKey
@@ -926,6 +993,8 @@ class CipherApp:
                     os.remove("decrypted_crypted_file.txt")
                 except OSError:
                     pass
+                with open("crypted_file.txt", "w") as f:
+                    f.write(text if text else self.code)
                 AES_realize('2', key)
                 with open("decrypted_crypted_file.txt", 'r') as f2:
                     result = f2.read()

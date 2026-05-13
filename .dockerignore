@@ -6,3 +6,11 @@ __pycache__
 *.pyo
 PythonCipher.code-workspace
 *.save
+
+.claude
+file.txt
+GUI/file.txt
+crypted_file.txt
+decrypted_crypted_file.txt
+GUI/crypted_file.txt
+GUI/decrypted_crypted_file.txt
