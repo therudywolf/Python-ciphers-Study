@@ -1,11 +1,8 @@
-# Python Cipher Suite - Requirements
-# This project uses only Python standard library modules:
-# - tkinter (GUI)
-# - random, os, time, re, math (utilities)
-#
-# No external dependencies required!
-# Just ensure your Python installation includes tkinter:
-#   - Windows: included by default
-#   - Ubuntu/Debian: sudo apt-get install python3-tk
-#   - Fedora: sudo dnf install python3-tkinter
-#   - macOS: included with python.org installer
+# Runtime dependencies
+# The project uses Python standard library modules only.
+# tkinter must be available in the local Python installation.
+
+# Optional developer tools
+# pytest>=7.0
+# black>=22.0
+# pylint>=2.0

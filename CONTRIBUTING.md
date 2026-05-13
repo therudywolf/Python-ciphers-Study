@@ -1,21 +1,34 @@
-# Contributing
+# Contributing to Python Cipher Suite
 
 ## Scope
 
 This repository is an educational cryptography project. Keep changes focused, readable, and easy to run locally.
 
-## Before opening a change
+## Workflow
 
-1. Run `PYTHONDONTWRITEBYTECODE=1 python3 -m compileall -q GUI/*.py *.py`
-2. Check that no personal files, editor state, tokens, or generated outputs are staged
-3. Keep algorithm behavior changes explicit in the description
+1. Create a branch for the change.
+2. Make the smallest coherent change that solves the problem.
+3. Run local checks before opening a pull request.
+4. Verify that no personal files, editor state, tokens, or generated outputs are staged.
 
-## Style
+## Local checks
 
-- Prefer small, direct fixes over broad rewrites
-- Keep GUI changes usable on modest screen sizes
-- Avoid committing generated text outputs and local IDE configuration
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m compileall -q GUI/*.py *.py
+```
 
-## Security
+## Guidelines
 
-Do not present this code as production-grade cryptography. If a change touches key handling, signatures, or randomness, call that out clearly in the review notes.
+- Write clear commit messages.
+- Keep GUI changes usable on modest screen sizes.
+- Prefer direct fixes over broad rewrites.
+- Call out algorithm behavior changes explicitly in the description.
+- Do not present this code as production-grade cryptography.
+
+## Reporting issues
+
+When reporting a bug, include the Python version, operating system, steps to reproduce, and the expected versus actual behavior.
+
+## License
+
+All contributions are licensed under the GNU Affero General Public License v3.0 or later.
