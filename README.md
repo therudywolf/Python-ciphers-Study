@@ -1,12 +1,27 @@
-# Python Cipher Suite
+# 🐺 RudyWolf Cipher Suite
+
+> `D34D1N$1D3` :: BMW • Racing • Dead inside wolf :: cryptography study archive
+
+My resources:
+- [Gravatar](https://gravatar.com/therudywolf)
+- [OneToThree](https://onetothree.ru)
+- [Forest blog](https://t.me/theforestserver)
+- [X](https://x.com/therudywolf)
+- [GitHub](https://github.com/therudywolf)
+- [Twitch](https://twitch.tv/therudywolf)
+- [Reddit](https://reddit.com/user/Most-Watercress-6718)
+- [Telegram](https://t.me/rudy_wolf)
+- [YouTube](https://youtube.com/channel/UCXHkoSlaY5QaNmN_l4t0djQ)
 
 This project is licensed under the GNU Affero General Public License v3.0 or later.
+AGPL v3 Copyleft applies to reuse, modification, and network deployment of derived versions.
 
 > Учебный набор классических и современных криптографических алгоритмов с CLI-скриптами и единым Tkinter GUI.
 
 ## Что это за проект
 
 - Учебная реализация шифров, перестановок, ЭЦП и обмена ключами.
+- Архивный учебный репозиторий RudyWolf с единым FOSS-оформлением.
 - Подходит для демонстрации алгоритмов, лабораторных и самостоятельного изучения.
 - Не предназначен для production-задач и защиты реальных данных.
 
