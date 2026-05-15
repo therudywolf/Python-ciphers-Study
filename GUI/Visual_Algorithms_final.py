@@ -1,22 +1,32 @@
-import tkinter as tk
-from tkinter import messagebox, ttk
 import os
 import sys
+import tkinter as tk
+from tkinter import messagebox, ttk
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
-from reshetka_kardano_final import reshetka_kardano
-from re import findall
-from vernam import notepad_shenona
-from A5_first import a5_realisation
-from A5_second import a52_realisation
-from AES import AES_realize
-from Magma import prZamena, Gamma, GammaOBR, imitovstavka
-from RSA import RSA_realisation
-from ElGamal import ElGamal_realisation
-from GOST_34_10_94 import GOST_34_10_94_realisation
-from GOST_34_10_2012 import GOST_34_10_2012_realisation
-
+from cipher_suite.asymmetric.elgamal import ElGamal_realisation
+from cipher_suite.asymmetric.gost_34_10_94 import GOST_34_10_94_realisation
+from cipher_suite.asymmetric.gost_34_10_2012 import GOST_34_10_2012_realisation
+from cipher_suite.asymmetric.rsa import RSA_realisation
+from cipher_suite.classical.atbash import decrypt as atbash_decrypt, encrypt as atbash_encrypt
+from cipher_suite.classical.belazo import decrypt as belazo_decrypt, encrypt as belazo_encrypt
+from cipher_suite.classical.caesar import decrypt as cesar_decrypt, encrypt as cesar_encrypt
+from cipher_suite.classical.matrix import MatrixLength, alpha, check_errors, encrypt_decrypt
+from cipher_suite.classical.playfair import playfer_crypt, playfer_decrypt
+from cipher_suite.classical.polibiy import decrypt as polibiy_decrypt, encrypt as polibiy_encrypt
+from cipher_suite.classical.tritemius import decrypt as tritemiy_decrypt, encrypt as tritemiy_encrypt
+from cipher_suite.classical.vertical import vertical_change
+from cipher_suite.classical.vigener import decrypt as vigener_decrypt, encrypt as vigener_encrypt
+from cipher_suite.modern.a5_first import a5_realisation
+from cipher_suite.modern.a5_second import a52_realisation
+from cipher_suite.modern.aes import AES_realize
+from cipher_suite.modern.diffie_hellman import compute_shared_secret
+from cipher_suite.modern.magma import Gamma, GammaOBR, imitovstavka, prZamena
+from cipher_suite.modern.reshetka_kardano import reshetka_kardano
+from cipher_suite.modern.vernam import notepad_shenona
 
 ALGORITHMS = [
     "Атбаш", "Цезарь", "Полибий", "Тритемий", "Белазо", "Виженер",
@@ -64,486 +74,6 @@ TEXT_PRIMARY = "#e2e8f0"
 TEXT_SECONDARY = "#94a3b8"
 SUCCESS = "#10b981"
 ERROR = "#ef4444"
-
-code = ''
-decode = ''
-key = ''
-text = ''
-krya = 0
-
-
-# --- Cipher logic ---
-
-def atbash_encrypt(text):
-    alphavite = ',.!:\'\"#?@[](){} '
-    result = ''
-    for i in text:
-        if i.isupper():
-            k = ord(i) % ord('А')
-            result += chr(ord('Я') - k)
-        elif i.islower():
-            k = ord(i) % ord('а')
-            result += chr(ord('я') - k)
-        else:
-            if i in alphavite:
-                result += alphavite[len(alphavite) - alphavite.find(i) - 1]
-            else:
-                result += i
-    return result
-
-
-def atbash_decrypt(text):
-    return atbash_encrypt(text)
-
-
-def cesar_encrypt(text, key):
-    alphavite = ',.!:\'\"#?@[](){} '
-    alphavite1 = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
-    result = ""
-    distance = int(key)
-    for i in text:
-        if i.islower():
-            result += alphavite1[(alphavite1.find(i) + distance) % len(alphavite1)]
-        elif i.isupper():
-            result += alphavite2[(alphavite2.find(i) + distance) % len(alphavite2)]
-        else:
-            if i in alphavite:
-                result += alphavite[(alphavite.find(i) + distance) % len(alphavite)]
-            else:
-                result += i
-    return result
-
-
-def cesar_decrypt(text, key):
-    alphavite = ',.!:\'\"#?@[](){} '
-    alphavite1 = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
-    result = ""
-    distance = int(key)
-    for i in text:
-        if i.islower():
-            result += alphavite1[(alphavite1.find(i) - distance) % len(alphavite1)]
-        elif i.isupper():
-            result += alphavite2[(alphavite2.find(i) - distance) % len(alphavite2)]
-        else:
-            if i in alphavite:
-                result += alphavite[(alphavite.find(i) - distance) % len(alphavite)]
-            else:
-                result += i
-    return result
-
-
-def polibiy_encrypt(text):
-    alpha = 'абвгдежзийклмнопрстуфхцчшщъыьэюя, .!'
-    result = ''
-    text_lower = text.lower()
-    for i in text_lower:
-        pos = alpha.find(i)
-        if pos >= 0:
-            result += str(pos // 6 + 1) + str(pos % 6 + 1) + ' '
-    return result.strip()
-
-
-def polibiy_decrypt(text):
-    alpha = 'абвгдежзийклмнопрстуфхцчшщъыьэюя, .!'
-    parts = text.split()
-    result = ''
-    for i in parts:
-        if len(i) >= 2:
-            result += alpha[(int(i[0]) - 1) * 6 + int(i[1]) - 1]
-    return result
-
-
-def tritemiy_encrypt(text):
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = alphavite.upper()
-    alphavite3 = ',.!:\'\"#?@[](){} '
-    result = ''
-    meow = 0
-    for i in text:
-        if i.islower():
-            result += alphavite[(alphavite.find(i) + meow) % len(alphavite)]
-        elif i.isupper():
-            result += alphavite2[(alphavite2.find(i) + meow) % len(alphavite2)]
-        else:
-            if i in alphavite3:
-                result += alphavite3[(alphavite3.find(i) + meow) % len(alphavite3)]
-            else:
-                result += i
-        meow += 1
-    return result
-
-
-def tritemiy_decrypt(text):
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = alphavite.upper()
-    alphavite3 = ',.!:\'\"#?@[](){} '
-    result = ''
-    meow = 0
-    for i in text:
-        if i.islower():
-            result += alphavite[(alphavite.find(i) - meow) % len(alphavite)]
-        elif i.isupper():
-            result += alphavite2[(alphavite2.find(i) - meow) % len(alphavite2)]
-        else:
-            if i in alphavite3:
-                result += alphavite3[(alphavite3.find(i) - meow) % len(alphavite3)]
-            else:
-                result += i
-        meow += 1
-    return result
-
-
-def belazo_encrypt(text, key):
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = alphavite.upper()
-    alphavite3 = ',.!:\'\"#?@[](){} '
-    result = ''
-    meow = 0
-    for i in text:
-        if i.islower():
-            result += alphavite[(alphavite.find(i) + alphavite.find(key[meow]) + 1) % len(alphavite)]
-        elif i.isupper():
-            result += alphavite2[(alphavite2.find(i) + alphavite2.find(key[meow].upper()) + 1) % len(alphavite2)]
-        else:
-            if i in alphavite3:
-                result += alphavite3[(alphavite3.find(i) + alphavite3.find(key[meow]) - 1) % len(alphavite3)]
-            else:
-                result += i
-        meow = (meow + 1) % len(key)
-    return result
-
-
-def belazo_decrypt(text, key):
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = alphavite.upper()
-    alphavite3 = ',.!:\'\"#?@[](){} '
-    result = ''
-    meow = 0
-    for i in text:
-        if i.islower():
-            result += alphavite[(alphavite.find(i) - alphavite.find(key[meow]) - 1) % len(alphavite)]
-        elif i.isupper():
-            result += alphavite2[(alphavite2.find(i) - alphavite2.find(key[meow].upper()) - 1) % len(alphavite2)]
-        else:
-            if i in alphavite3:
-                result += alphavite3[(alphavite3.find(i) - alphavite3.find(key[meow]) + 1) % len(alphavite3)]
-            else:
-                result += i
-        meow = (meow + 1) % len(key)
-    return result
-
-
-def vigener_encrypt(text, key):
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = alphavite.upper()
-    alphavite3 = ',.!:\'\"#?@[](){} '
-    result = ''
-    full_key = key + text
-    meow = 0
-    for i in text:
-        if i.islower():
-            result += alphavite[(alphavite.find(i) + alphavite.find(full_key[meow])) % len(alphavite)]
-        elif i.isupper():
-            result += alphavite2[(alphavite2.find(i) + alphavite2.find(full_key[meow].upper())) % len(alphavite2)]
-        else:
-            if i in alphavite3:
-                result += alphavite3[(alphavite3.find(i) + alphavite3.find(full_key[meow])) % len(alphavite3)]
-            else:
-                result += i
-        meow = (meow + 1) % len(full_key)
-    return result
-
-
-def vigener_decrypt(text, key):
-    alphavite = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-    alphavite2 = alphavite.upper()
-    alphavite3 = ',.!:\'\"#?@[](){} '
-    full_key = key + text
-    result = ''
-    meow = 0
-    for i in text:
-        if i.islower():
-            result += alphavite[(alphavite.find(i) - alphavite.find(full_key[meow])) % len(alphavite)]
-        elif i.isupper():
-            result += alphavite2[(alphavite2.find(i) - alphavite2.find(full_key[meow].upper())) % len(alphavite2)]
-        else:
-            if i in alphavite3:
-                result += alphavite3[(alphavite3.find(i) - alphavite3.find(full_key[meow])) % len(alphavite3)]
-            else:
-                result += i
-        meow = (meow + 1) % len(full_key)
-    return result
-
-
-# --- Matrix cipher helpers ---
-alpha = tuple("АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ .,!/{}\'\"1234567890")
-MatrixLength = 3
-MatrixMod = len(alpha)
-MatrixSquare = MatrixLength * MatrixLength
-mainKey = ""
-
-
-def checkErrors(key):
-    if len(key) != MatrixSquare:
-        return "Длина ключа не равна длине квадрата матрицы!"
-    elif not getDeter(sliceto(key)):
-        return "Определитель матрицы равен 0!"
-    elif not getDeter(sliceto(key)) % MatrixMod:
-        return "Определитель матрицы mod длина алфавита = 0"
-    return None
-
-
-def regular(text):
-    template = r".{%d}" % MatrixLength
-    return findall(template, text)
-
-
-def encode(matrix):
-    for x in range(len(matrix)):
-        for y in range(MatrixLength):
-            matrix[x][y] = alpha.index(matrix[x][y])
-    return matrix
-
-
-def decode_matrix(matrixM, matrixK, message=""):
-    matrixF = []
-    for z in range(len(matrixM)):
-        temp = [0 for _ in range(MatrixLength)]
-        for x in range(MatrixLength):
-            for y in range(MatrixLength):
-                temp[x] += matrixK[x][y] * matrixM[z][y]
-            temp[x] = alpha[temp[x] % MatrixMod]
-        matrixF.append(temp)
-    for string in matrixF:
-        message += "".join(string)
-    return message
-
-
-def sliceto(text):
-    matrix = []
-    for three in regular(text):
-        matrix.append(list(three))
-    return encode(matrix)
-
-
-def iDet(det):
-    for num in range(MatrixMod):
-        if num * det % MatrixMod == 1:
-            return num
-
-
-def algebratic(x, y, det):
-    global mainKey
-    matrix = sliceto(mainKey)
-    matrix.remove(matrix[x])
-    for z in range(2):
-        matrix[z].remove(matrix[z][y])
-    det2x2 = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
-    return (pow(-1, x + y) * det2x2 * iDet(det)) % MatrixMod
-
-
-def getDeter(matrix):
-    return (
-        (matrix[0][0] * matrix[1][1] * matrix[2][2]) +
-        (matrix[0][1] * matrix[1][2] * matrix[2][0]) +
-        (matrix[1][0] * matrix[2][1] * matrix[0][2]) -
-        (matrix[0][2] * matrix[1][1] * matrix[2][0]) -
-        (matrix[0][1] * matrix[1][0] * matrix[2][2]) -
-        (matrix[1][2] * matrix[2][1] * matrix[0][0])
-    )
-
-
-def getAlgbr(det, index=0):
-    algbrs = [0 for _ in range(MatrixSquare)]
-    for string in range(MatrixLength):
-        for column in range(MatrixLength):
-            algbrs[index] = algebratic(string, column, det)
-            index += 1
-    return algbrs
-
-
-def getIMatr(algbr):
-    return [
-        [algbr[0], algbr[3], algbr[6]],
-        [algbr[1], algbr[4], algbr[7]],
-        [algbr[2], algbr[5], algbr[8]]
-    ]
-
-
-def encryptDecrypt(mode, message, key):
-    MatrixMessage = sliceto(message)
-    MatrixKey = sliceto(key)
-    if mode == '1':
-        return decode_matrix(MatrixMessage, MatrixKey)
-    else:
-        algbr = getAlgbr(getDeter(MatrixKey))
-        return decode_matrix(MatrixMessage, getIMatr(algbr))
-
-
-# --- Playfair cipher ---
-def playfer_crypt(text, key):
-    alphavite_lower = list('абвгдежзиклмнопрстуфхцчшщьыэюя')
-    text = text.lower()
-    for ch in list(text):
-        if ch == ',':
-            text = text.replace(ch, 'зпт')
-        elif ch == ".":
-            text = text.replace(ch, "тчк")
-        elif ch not in alphavite_lower:
-            text = text.replace(ch, '')
-    new_alphabet = []
-    for i in range(len(key)):
-        if key[i] not in new_alphabet:
-            new_alphabet.append(key[i])
-    for ch in alphavite_lower:
-        if ch not in new_alphabet:
-            new_alphabet.append(ch)
-    mtx = []
-    counter = 0
-    for j in range(5):
-        row = []
-        for i in range(6):
-            row.append(new_alphabet[counter])
-            counter += 1
-        mtx.append(row)
-    if len(text) % 2 == 1:
-        text += "я"
-    enc_text = ""
-    for t in range(0, len(text), 2):
-        j1, i1, j2, i2 = -1, -1, -1, -1
-        for j in range(5):
-            for i in range(6):
-                if mtx[j][i] == text[t]:
-                    j1, i1 = j, i
-                if mtx[j][i] == text[t + 1]:
-                    j2, i2 = j, i
-        if j1 == -1 or j2 == -1:
-            enc_text += text[t:t+2]
-            continue
-        if j1 != j2 and i1 != i2:
-            enc_text += mtx[j1][i2] + mtx[j2][i1]
-        elif j1 == j2 and i1 != i2:
-            enc_text += mtx[j1][(i1 + 1) % 6] + mtx[j2][(i2 + 1) % 6]
-        elif j1 != j2 and i1 == i2:
-            enc_text += mtx[(j1 - 1) % 5][i1] + mtx[(j2 - 1) % 5][i2]
-        else:
-            enc_text += mtx[j1][i1] + mtx[j1][i1]
-    return enc_text
-
-
-def playfer_decrypt(text, key):
-    alphavite_lower = list('абвгдежзиклмнопрстуфхцчшщьыэюя')
-    text = text.lower()
-    for ch in list(text):
-        if ch not in alphavite_lower:
-            text = text.replace(ch, '')
-    new_alphabet = []
-    for i in range(len(key)):
-        if key[i] not in new_alphabet:
-            new_alphabet.append(key[i])
-    for ch in alphavite_lower:
-        if ch not in new_alphabet:
-            new_alphabet.append(ch)
-    mtx = []
-    counter = 0
-    for j in range(5):
-        row = []
-        for i in range(6):
-            row.append(new_alphabet[counter])
-            counter += 1
-        mtx.append(row)
-    if len(text) % 2 == 1:
-        text += "я"
-    enc_text = ""
-    for t in range(0, len(text), 2):
-        j1, i1, j2, i2 = -1, -1, -1, -1
-        for j in range(5):
-            for i in range(6):
-                if mtx[j][i] == text[t]:
-                    j1, i1 = j, i
-                if mtx[j][i] == text[t + 1]:
-                    j2, i2 = j, i
-        if j1 == -1 or j2 == -1:
-            enc_text += text[t:t+2]
-            continue
-        if j1 != j2 and i1 != i2:
-            enc_text += mtx[j1][i2] + mtx[j2][i1]
-        elif j1 == j2 and i1 != i2:
-            enc_text += mtx[j1][(i1 - 1) % 6] + mtx[j2][(i2 - 1) % 6]
-        elif j1 != j2 and i1 == i2:
-            enc_text += mtx[(j1 + 1) % 5][i1] + mtx[(j2 + 1) % 5][i2]
-        else:
-            enc_text += mtx[j1][i1] + mtx[j1][i1]
-    return enc_text
-
-
-# --- Vertical transposition ---
-def vertical_change(text, key):
-    alphabet_lower = {
-        'а': 0, 'б': 1, 'в': 2, 'г': 3, 'д': 4, 'е': 5, 'ж': 6, 'з': 7,
-        'и': 8, 'й': 9, 'к': 10, 'л': 11, 'м': 12, 'н': 13, 'о': 14, 'п': 15,
-        'р': 16, 'с': 17, 'т': 18, 'у': 19, 'ф': 20, 'х': 21, 'ц': 22, 'ч': 23,
-        'ш': 24, 'щ': 25, 'ъ': 26, 'ы': 27, 'ь': 28, 'э': 29, 'ю': 30, 'я': 31,
-        ' ': 32, ",": 33, ".": 34, 'А': 35, 'Б': 36, 'В': 37, "Г": 38, "Д": 39,
-        'Е': 40, 'Ж': 41, 'З': 42, 'И': 43, 'Й': 44, 'К': 45, 'Л': 46, 'М': 47,
-        'Н': 48, 'О': 49, 'П': 50, 'Р': 51, 'С': 52, 'Т': 53, 'У': 54, 'Ф': 55,
-        'Х': 56, 'Ц': 57, 'Ч': 58, 'Ш': 59, 'Щ': 60, 'Ъ': 61, 'Ы': 62, 'Ь': 63,
-        'Э': 64, 'Ю': 65, 'Я': 66, '!': 67, "?": 68, ";": 69
-    }
-    key_len = len(key)
-    msg = text
-    while len(msg) < key_len * key_len:
-        msg += '.'
-    msg_pl_key = key + msg
-    list_msg = list(msg_pl_key)
-    split_msg = [list_msg[i:i + key_len] for i in range(0, len(list_msg), key_len)]
-    coded = []
-    for i in range(len(split_msg)):
-        for j in range(len(split_msg[i])):
-            val = alphabet_lower.get(split_msg[i][j], 34)
-            coded.append(val)
-    split_coded = [coded[i:i + key_len] for i in range(0, len(coded), key_len)]
-    encrypted_matrix = []
-
-    def sortRow(keylen, badlist):
-        k = key_len - 1
-        while k > 0:
-            ind = 0
-            for j in range(k + 1):
-                if badlist[0][j] > badlist[0][ind]:
-                    ind = j
-            for i in range(len(badlist)):
-                m = badlist[i][ind]
-                badlist[i][ind] = badlist[i][k]
-                badlist[i][k] = m
-            k -= 1
-        for i in range(len(badlist)):
-            for j in range(keylen):
-                encrypted_matrix.append(badlist[i][j])
-
-    sortRow(key_len, split_coded)
-    split_encrypted = [encrypted_matrix[i:i + key_len] for i in range(0, len(encrypted_matrix), key_len)]
-
-    def get_key(d, value):
-        for k, v in d.items():
-            if v == value:
-                return k
-
-    enc_result = ''
-    for i in range(1, len(split_encrypted)):
-        for j in range(len(split_encrypted[i])):
-            ch = get_key(alphabet_lower, split_encrypted[i][j])
-            if ch:
-                enc_result += ch
-
-    dec_result = ""
-    for i in range(1, len(split_msg)):
-        for j in range(len(split_msg[i])):
-            dec_result += split_msg[i][j]
-
-    return enc_result, dec_result
 
 
 # --- Main GUI Application ---
@@ -727,7 +257,6 @@ class CipherApp:
         self.root.clipboard_append(text)
 
     def _encrypt(self):
-        global mainKey
         algo = self.selected_algo.get()
         text = self._get_text()
         key = self._get_key()
@@ -781,7 +310,7 @@ class CipherApp:
                     self._show_result("Ключ должен быть длиной 9 символов!", is_error=True)
                     return
                 mainKey = key.upper()
-                err = checkErrors(mainKey)
+                err = check_errors(mainKey)
                 if err:
                     self._show_result(err, is_error=True)
                     return
@@ -791,7 +320,7 @@ class CipherApp:
                         msg = msg.replace(s, '')
                 while len(msg) % MatrixLength != 0:
                     msg += msg[-1]
-                result = encryptDecrypt('1', msg, mainKey)
+                result = encrypt_decrypt('1', msg, mainKey)
                 self.code = result
                 self._show_result(result)
 
@@ -887,7 +416,6 @@ class CipherApp:
             self._show_result(f"Ошибка: {str(e)}", is_error=True)
 
     def _decrypt(self):
-        global mainKey
         algo = self.selected_algo.get()
         text = self._get_text()
         key = self._get_key()
@@ -941,14 +469,14 @@ class CipherApp:
                     self._show_result("Ключ должен быть длиной 9 символов!", is_error=True)
                     return
                 mainKey = key.upper()
-                err = checkErrors(mainKey)
+                err = check_errors(mainKey)
                 if err:
                     self._show_result(err, is_error=True)
                     return
                 src = self.code if self.code else text.upper()
                 while len(src) % MatrixLength != 0:
                     src += src[-1]
-                result = encryptDecrypt('2', src, mainKey)
+                result = encrypt_decrypt('2', src, mainKey)
                 self._show_result(result)
 
             elif algo == "Плейфер":
@@ -1104,14 +632,7 @@ class DiffieHellmanWindow(tk.Toplevel):
             ka = int(self.entries['ka'].get())
             kb = int(self.entries['kb'].get())
 
-            if g ** (p - 1) % p != 1:
-                messagebox.showinfo("Ошибка", "g^(p-1) mod p != 1\nВведите другие числа P и G!")
-                return
-
-            YA = g ** ka % p
-            YB = g ** kb % p
-            K1 = YB ** ka % p
-            K2 = YA ** kb % p
+            YA, YB, K1, K2 = compute_shared_secret(p, g, ka, kb)
 
             result = (
                 f"Открытый ключ Алисы: {YA}\n"
@@ -1121,8 +642,8 @@ class DiffieHellmanWindow(tk.Toplevel):
             if K1 == K2:
                 result += "\n\nКлючи совпали!"
             self.result_label.config(text=result, fg=SUCCESS)
-        except ValueError:
-            messagebox.showinfo("Ошибка", "Введите корректные числа!")
+        except ValueError as e:
+            messagebox.showinfo("Ошибка", str(e) if str(e) else "Введите корректные числа!")
         except Exception as e:
             messagebox.showinfo("Ошибка", str(e))
 

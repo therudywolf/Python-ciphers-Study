@@ -1,8 +1,4 @@
-# Runtime dependencies
-# The project uses Python standard library modules only.
-# tkinter must be available in the local Python installation.
+# Runtime: только стандартная библиотека Python (+ tkinter в установке Python).
 
-# Optional developer tools
-# pytest>=7.0
-# black>=22.0
-# pylint>=2.0
+# Разработка и тесты:
+#   pip install -e ".[dev]"
