@@ -1,16 +1,39 @@
-# 🐺 RudyWolf Cipher Suite
-
-This project is licensed under the GNU Affero General Public License v3.0 or later.
-AGPL v3 Copyleft applies to reuse, modification, and network deployment of derived versions.
+# 🐺 RudyWolf Archive: Python Cipher Suite
 
 > Учебный набор классических и современных криптографических алгоритмов с CLI-скриптами и единым Tkinter GUI.
+
+![Version](https://img.shields.io/badge/version-archive-4c8bf5)
+![Status](https://img.shields.io/badge/status-archive-6b7280)
+[![License](https://img.shields.io/badge/license-AGPL--3.0--or--later-22c55e)](LICENSE)
+
+## Status
+
+- Archive-only repository (educational demos).
+- Not intended for production use or protecting real data.
+- License: [AGPL-3.0-or-later](LICENSE) — see [SECURITY.md](SECURITY.md).
+
+## Secrets
+
+- No API keys or `.env` files; algorithms run entirely offline.
+- Do not commit coursework exports, student data, or patched binaries.
+
+## Run
+
+```bash
+python GUI/Visual_Algorithms_final.py   # Tkinter GUI
+python cesar.py                         # example CLI script
+```
+
+Docker: see [Запуск через Docker](#запуск-через-docker) below.
+
+## Publication Note
+
+Before any push or reuse, check that no personal data or local build artifacts are included in tracked files or history.
 
 ## Что это за проект
 
 - Учебная реализация шифров, перестановок, ЭЦП и обмена ключами.
-- Архивный учебный репозиторий RudyWolf с единым FOSS-оформлением.
 - Подходит для демонстрации алгоритмов, лабораторных и самостоятельного изучения.
-- Не предназначен для production-задач и защиты реальных данных.
 
 ## Поддерживаемые алгоритмы
 
@@ -53,22 +76,6 @@ AGPL v3 Copyleft applies to reuse, modification, and network deployment of deriv
 | Алгоритм | CLI | GUI |
 |----------|-----|-----|
 | Диффи-Хэллман | `diffie-hellman.py` | + |
-
-## Быстрый запуск
-
-### Запуск GUI
-
-```bash
-python GUI/Visual_Algorithms_final.py
-```
-
-### Запуск CLI-алгоритма
-
-```bash
-python cesar.py
-python RSA.py
-python Magma.py
-```
 
 ## Работа с GUI
 
